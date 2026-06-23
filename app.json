@@ -7,18 +7,19 @@
     "icon": "./assets/images/Sini-icon.webp",
     "scheme": "sini",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "icon": "./assets/images/Sini-icon.webp",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sini.app"
     },
     "android": {
+      "package": "com.sini.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/Sini-logo.webp",
         "backgroundImage": "./assets/images/Sini-logo.webp",
         "monochromeImage": "./assets/images/Sini-logo.webp"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -30,12 +31,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Sini-icon.webp",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
+          "backgroundColor": "#208AEF",
+          "android": {
+            "image": "./assets/images/Sini-icon.webp",
+            "imageWidth": 76
           }
         }
       ]
