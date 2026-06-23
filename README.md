@@ -5,7 +5,7 @@ Welcome to Sini, a mobile application designed to connect you with the community
 ## Application Preview
 
 <p align="center">
-  <img src="assets/base_design.png" alt="Sini App Design Preview" width="300">
+  <img src="assets/base_design.jpg" alt="Sini App Design Preview" width="300">
 </p>
 
 ## About The App
