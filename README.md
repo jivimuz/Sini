@@ -1,56 +1,44 @@
-# Welcome to your Expo app 👋
+# Sini - Local Information Sharing App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Welcome to Sini, a mobile application designed to connect you with the community and information around your location. Discover events, share moments, and stay connected with what's happening in your neighborhood.
 
-## Get started
+## Application Preview
 
-1. Install dependencies
+<p align="center">
+  <img src="assets/base_design.png" alt="Sini App Design Preview" width="300">
+</p>
 
-   ```bash
-   npm install
-   ```
+## About The App
 
-2. Start the app
+Sini is a location-based social platform that aims to build stronger local communities. Users can easily see what's trending around them, from new dining spots and community events to important alerts from neighbors. With an intuitive interface and multi-language support, Sini makes it easy for everyone to participate.
 
-   ```bash
-   npx expo start
-   ```
+## Key Features
 
-In the output, you'll find options to open the app in a
+- **Home:** View the latest posts from people around you in a dynamic feed.
+- **Nearby:** Explore an interactive map to find posts, places, or events based on their geographical location.
+- **Create Post:** Easily share your own information, photos, or events with the local community.
+- **Chat:** Communicate privately with other users.
+- **Profile & Settings:** Manage your profile, view your post history, and customize application settings, including language preferences (Indonesian & English).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## How to Run The Project
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+This project is built with React Native using Expo. To run it locally, follow these steps:
 
-## Get a fresh project
+1.  **Clone the Repository**
+    ```bash
+    git clone <YOUR_REPOSITORY_URL>
+    cd Sini
+    ```
 
-When you're ready, run:
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    # or if you use yarn
+    # yarn install
+    ```
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3.  **Run the Application**
+    ```bash
+    npx expo start
+    ```
+    Then, scan the QR code that appears using the Expo Go app on your mobile device.

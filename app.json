@@ -24,7 +24,10 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Sini-icon.webp"
+      "favicon": "./assets/images/Sini-icon.webp",
+      "web": {
+        "bundler": "metro"
+      }
     },
     "plugins": [
       "expo-router",
@@ -37,7 +40,8 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
