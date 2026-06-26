@@ -2,7 +2,7 @@ export const idIDFloatingNavbar = {
     floatingNavbar: {
         buttonTitle: {
             home: 'Beranda',
-            nearby: 'Dekat Saya',
+            nearby: 'Sekitar',
             post: 'Buat Postingan',
             chat: 'Obrolan',
             profile: 'Profil',

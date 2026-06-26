@@ -1,8 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
-import floatingNavbar from "./_locales";
-import { Lang, useLang } from "@/hooks/useLang";
+import floatingNavbar from "./locales";
+import { Lang, useLang } from "@/stores/lang.store";
 
 type FloatingNavbarProps = {
     activeTab: string;

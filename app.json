@@ -4,11 +4,11 @@
     "slug": "Sini",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Sini-icon.webp",
+    "icon": "./assets/images/Sini-brand.png",
     "scheme": "sini",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/images/Sini-icon.webp",
+      "icon": "./assets/images/Sini-brand.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.sini.app"
     },
@@ -16,15 +16,15 @@
       "package": "com.sini.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Sini-logo.webp",
-        "backgroundImage": "./assets/images/Sini-logo.webp",
-        "monochromeImage": "./assets/images/Sini-logo.webp"
+        "foregroundImage": "./assets/images/Sini-brand.png",
+        "backgroundImage": "./assets/images/Sini-logo.png",
+        "monochromeImage": "./assets/images/Sini-logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Sini-icon.webp",
+      "favicon": "./assets/images/Sini-icon.png",
       "web": {
         "bundler": "metro"
       }
@@ -36,12 +36,13 @@
         {
           "backgroundColor": "#208AEF",
           "android": {
-            "image": "./assets/images/Sini-icon.webp",
+            "image": "./assets/images/Sini-icon.png",
             "imageWidth": 76
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@maplibre/maplibre-react-native",
     ],
     "experiments": {
       "typedRoutes": true,
