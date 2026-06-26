@@ -6,6 +6,8 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useLang } from "@/stores/lang.store";
+import locales from "./locales";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const nearbyUsers = [
@@ -30,6 +32,8 @@ const nearbyUsers = [
 ];
 
 export default function NearbyScreen() {
+    const { lang } = useLang();
+    const t = locales[lang].nearbyScreen;
 
     return (
         <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
@@ -37,12 +41,14 @@ export default function NearbyScreen() {
             <View className="flex-1 bg-[#FFFDF5]">
 
                 <View className="px-5 pt-16 pb-4">
-                    <Text className="text-3xl font-bold">
-                        Nearby
+                    <Text className="text-3xl font-bold"
+                    >
+                        {t.title}
                     </Text>
 
-                    <Text className="mt-1 text-neutral-500">
-                        Temukan orang dan aktivitas di sekitarmu
+                    <Text className="mt-1 text-neutral-500"
+                    >
+                        {t.subtitle}
                     </Text>
                 </View>
 
@@ -62,14 +68,16 @@ export default function NearbyScreen() {
                         size={18}
                     />
 
-                    <Text className="ml-2 text-neutral-400">
-                        Cari orang atau tempat
+                    <Text className="ml-2 text-neutral-400"
+                    >
+                        {t.searchPlaceholder}
                     </Text>
                 </TouchableOpacity>
 
                 <View className="px-5 mt-6">
-                    <Text className="font-semibold text-lg">
-                        🔥 Ramai Sekarang
+                    <Text className="font-semibold text-lg"
+                    >
+                        {t.popularNow}
                     </Text>
                 </View>
 

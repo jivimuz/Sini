@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import floatingNavbar from "./locales";
@@ -60,7 +60,7 @@ const TabItem = ({ tab, isActive, isCenter, onPress }: TabItemProps) => {
                     isCenter && styles.centerButton, // Style khusus untuk membuat bulatan
                 ]}
             >
-                <Ionicons
+                <Feather
                     name={isActive ? tab.activeIcon : tab.icon}
                     size={isCenter ? 40 : 26} // Ikon tengah sengaja dibesarkan
                     color={
@@ -87,7 +87,7 @@ const TabItem = ({ tab, isActive, isCenter, onPress }: TabItemProps) => {
     );
 };
 
-type Tab = { title: string; name: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap };
+type Tab = { title: string; name: string; icon: keyof typeof Feather.glyphMap; activeIcon: keyof typeof Feather.glyphMap };
 
 const FloatingNavbar = ({ activeTab, setActiveTab }: FloatingNavbarProps) => {
     const { lang } = useLang();
@@ -96,11 +96,11 @@ const FloatingNavbar = ({ activeTab, setActiveTab }: FloatingNavbarProps) => {
     const tabNames = floatingNavbar[lang].floatingNavbar.buttonTitle;
 
     const tabs: Tab[] = [
-        { title: tabNames.home, name: "Home", icon: "home-outline", activeIcon: "home" },
-        { title: tabNames.nearby, name: "Nearby", icon: "map-outline", activeIcon: "map" },
-        { title: tabNames.post, name: "Create Post", icon: "add", activeIcon: "add" },
-        { title: tabNames.chat, name: "Chat", icon: "chatbubbles-outline", activeIcon: "chatbubbles" },
-        { title: tabNames.profile, name: "Profile", icon: "person-outline", activeIcon: "person" },
+        { title: tabNames.home, name: "Home", icon: "home", activeIcon: "home" },
+        { title: tabNames.nearby, name: "Nearby", icon: "map-pin", activeIcon: "map-pin" },
+        { title: tabNames.post, name: "Create Post", icon: "plus", activeIcon: "plus" },
+        { title: tabNames.chat, name: "Chat", icon: "message-circle", activeIcon: "message-circle" },
+        { title: tabNames.profile, name: "Profile", icon: "user", activeIcon: "user" },
     ];
 
     return (

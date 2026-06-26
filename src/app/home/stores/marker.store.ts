@@ -8,6 +8,8 @@ export interface DummyMarker {
     name: string;
     category: string;
     color: string;
+    is_live?: boolean;
+    created_at?: string;
 }
 
 interface MarkerStoreState {

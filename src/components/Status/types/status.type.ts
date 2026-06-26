@@ -8,7 +8,7 @@ interface StatusData {
     caption: string;
     location_name: string;
     distance: string;
-    remaining: string;
+    created_at: string;
 }
 
 export type { StatusData };

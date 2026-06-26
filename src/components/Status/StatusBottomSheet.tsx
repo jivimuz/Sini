@@ -20,13 +20,36 @@ import {
     ImageBackground,
     TextInput,
 } from "react-native";
-import { useStatusStore } from "@/app/status/stores/status.store";
+import { useStatusStore } from "@/components/Status/stores/status.store";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useLang } from "@/stores/lang.store";
 import locales from "./locales";
 import { StatusData } from "./types/status.type";
 
+// Helper untuk menghitung waktu yang telah berlalu.
+// Fungsi ini berasumsi bahwa objek locale `t` memiliki struktur seperti:
+// t.time = { minute: 'menit', hour: 'jam', day: 'hari', justNow: 'Baru saja' }
+// t.past = 'lalu'
+const formatTimeAgo = (dateString: string, t: any) => {
+    if (!dateString) return '';
 
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+    const timeUnits = t.time || { minute: t.minute || 'menit', hour: t.hour || 'jam', day: t.day || 'hari', justNow: t.justNow || 'Baru saja' };
+    const pastText = t.past || 'lalu';
+
+    if (diffInSeconds < 60) {
+        return timeUnits.justNow;
+    }
+    const minutes = Math.floor(diffInSeconds / 60);
+    if (minutes < 60) return `${minutes} ${timeUnits.minute} ${pastText}`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} ${timeUnits.hour} ${pastText}`;
+    const days = Math.floor(hours / 24);
+    return `${days} ${timeUnits.day} ${pastText}`;
+};
 
 export default function StatusBottomSheet() {
     const sheetRef =
@@ -52,30 +75,25 @@ export default function StatusBottomSheet() {
     useEffect(() => {
         if (selectedStatusId) {
             sheetRef.current?.expand();
-            setIsLiked(false); // Reset like state saat membuka status baru 
+            setIsLiked(false); // Reset like state saat membuka status baru
+
+            const twoHoursAgo = new Date();
+            twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+
             setStatus({
                 id: selectedStatusId,
                 user_name: "Baron",
                 avatarUrl: "https://i.pravatar.cc/150?u=Baron",
                 statusImageUrl: require("@/../assets/images/dummy/images-2.jpeg"),
                 caption: "Ngopi ☕",
-                location_name:
-                    "Senayan City",
+                location_name: "Senayan City",
                 distance: "120m",
-                remaining: "2 jam",
+                created_at: twoHoursAgo.toISOString(),
             })
             setIsLoading(false); // Set loading menjadi false setelah data status diatur
 
         } else {
             sheetRef.current?.close();
-        }
-    }, [selectedStatusId]);
-
-
-    useEffect(() => {
-        if (selectedStatusId) {
-            // Simulasi fetch data status berdasarkan selectedStatusId
-
         }
     }, [selectedStatusId]);
 
@@ -121,10 +139,9 @@ export default function StatusBottomSheet() {
                                                     <View className="flex-row items-center">
                                                         <Text className="text-lg font-bold text-white shadow-sm">
                                                             {status && status.user_name && status.user_name.split(' ')[0]}
-
                                                         </Text>
                                                         <Text className="ml-2 text-xs font-bold bg-black/30 px-2 py-1 rounded-full text-white">
-                                                            {status && status?.remaining} lalu
+                                                            {status?.created_at && formatTimeAgo(status.created_at, t)}
                                                         </Text>
                                                     </View>
                                                 </View>
@@ -153,16 +170,16 @@ export default function StatusBottomSheet() {
                                             </TouchableOpacity>
                                         </View>
                                         <View className="flex-row items-center space-x-3 border-t border-neutral-200/30 pt-4 gap-3" >
-                                            <View className="flex-1 flex-row items-center bg-black/30 rounded-full px-4">
+                                            <View className="flex-1 flex-row items-center bg-white/20 rounded-full px-4 py-2">
                                                 <TextInput
                                                     placeholder={t.chat}
                                                     placeholderTextColor="#E5E7EB" // Warna placeholder abu-abu terang
                                                     className="flex-1 text-white h-11"
                                                 />
+                                                <TouchableOpacity className="bg-softprimary h-11 w-11 rounded-full items-center justify-center">
+                                                    <AntDesign name="send" size={18} color="black" />
+                                                </TouchableOpacity>
                                             </View>
-                                            <TouchableOpacity className="bg-softprimary h-11 w-11 rounded-full items-center justify-center">
-                                                <AntDesign name="send" size={20} color="black" />
-                                            </TouchableOpacity>
                                         </View>
                                     </View>
                                 </View>

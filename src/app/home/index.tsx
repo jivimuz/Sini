@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import * as Location from "expo-location";
 import { useLang } from "@/stores/lang.store";
 
@@ -11,13 +11,13 @@ import {
     TouchableOpacity,
     Image,
     Animated,
+    FlatList,
     TouchableWithoutFeedback,
 } from "react-native";
-
 import {
     Map,
     Camera,
-    Marker, CameraRef
+    Marker, CameraRef, MapRef
 } from "@maplibre/maplibre-react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -34,9 +34,12 @@ import {
 import { useIsNewNotif } from "./stores/notification.store";
 import { useRouteStore } from "./stores/route.store";
 import RouteLine from "@/components/RouteLine/RouteLine";
-import { useStatusStore } from "@/app/status/stores/status.store";
+import { useStatusStore } from "@/components/Status/stores/status.store";
 import { useBarColor } from "@/stores/barColor.store";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { clusterMarkers } from "./constants/clusterMarkers";
+import { ALL_CATEGORIES, CATEGORIES, CategoryKey, LiveFilterStatus } from "./constants/categories";
+import { FilterModal } from "./utils/FilterModal";
 
 
 
@@ -45,19 +48,61 @@ const INDONESIA_CENTER: [number, number] = [
     -2.5,
 ];
 
-const CATEGORY_DATA = {
-    one: { color: '#3498db', icon: 'people-outline' as const },
-    two: { color: '#2ecc71', icon: 'home-outline' as const },
-    three: { color: '#e67e22', icon: 'briefcase-outline' as const },
-} as const;
-
-type CategoryKey = keyof typeof CATEGORY_DATA;
-
-const ALL_CATEGORIES = Object.keys(CATEGORY_DATA) as CategoryKey[];
-
-
 export default function HomeScreen() {
 
+    // Helper function to calculate distance
+    const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return "";
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        const d = R * c; // in metres
+        if (d < 1000) {
+            return `${Math.round(d)} m`;
+        }
+        return `${(d / 1000).toFixed(1)} km`;
+    };
+
+    // Helper function to calculate distance in meters
+    const getDistanceInMeters = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // in metres
+    };
+
+    // Helper to format time
+    const formatTimeAgo = (dateString: string) => {
+        if (!dateString) return '';
+        const now = new Date();
+        const past = new Date(dateString);
+        const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return `Baru saja`;
+        const minutes = Math.floor(diffInSeconds / 60);
+        if (minutes < 60) return `${minutes}m lalu`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}j lalu`;
+        const days = Math.floor(hours / 24);
+        return `${days}h lalu`;
+    };
 
     const { lang } = useLang();
     const t = locales[lang].homeScreen;
@@ -112,16 +157,9 @@ export default function HomeScreen() {
         Linking.openURL(url).catch(() => Alert.alert("Error", "Tidak dapat membuka peta."));
     };
 
-
-    const CATEGORIES = {
-        one: { name: "Event", ...CATEGORY_DATA.one },
-        two: { name: "Selling", ...CATEGORY_DATA.two },
-        three: { name: "Work", ...CATEGORY_DATA.three },
-    };
-
     const {
-        latitude,
-        longitude,
+        latitude: userLatitude,
+        longitude: userLongitude,
         setLocation,
         setPermission,
         hasPermission,
@@ -130,13 +168,19 @@ export default function HomeScreen() {
     const { markers, setMarkers } = useMarkerStore();
     const { newNotif } = useIsNewNotif();
 
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState<DummyMarker | null>(null);
     const [visibleCategories, setVisibleCategories] = useState<CategoryKey[]>(ALL_CATEGORIES);
     const [isMapCentered, setIsMapCentered] = useState(true);
+    const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+    const [liveFilterStatus, setLiveFilterStatus] = useState<LiveFilterStatus>('all');
+    const [filterRadius, setFilterRadius] = useState<number>(500); // in meters, 500m default
+    const [selectedCluster, setSelectedCluster] =
+        useState<DummyMarker[]>([]);
 
-
+    const [clusterVisible, setClusterVisible] =
+        useState(false);
     const cameraRef = useRef<CameraRef>(null);
+    const mapRef = useRef<MapRef>(null);
 
     const [cameraConfig, setCameraConfig] =
         useState({
@@ -150,6 +194,8 @@ export default function HomeScreen() {
     useEffect(() => {
         requestLocation();
     }, []);
+
+    const [currentZoom, setCurrentZoom] = useState(15);
 
     // Effect to handle compass-based map rotation (like Pokemon Go)
     useEffect(() => {
@@ -177,8 +223,6 @@ export default function HomeScreen() {
 
         startWatchingHeading();
 
-        // Cleanup function to remove the subscription when the component unmounts
-        // or when dependencies (hasPermission, isMapCentered) change.
         return () => {
             headingSubscription?.remove();
         };
@@ -200,30 +244,34 @@ export default function HomeScreen() {
 
     // Style untuk gelombang pertama (luar)
     const pulseStyle1 = {
-        transform: [{
-            scale: pulseAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 1], // Membesar dari 0% ke 100% ukuran container
-            })
-        }],
+        transform: [
+            {
+                scale: pulseAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.7, 1.5],
+                }),
+            },
+        ],
         opacity: pulseAnim.interpolate({
             inputRange: [0, 1],
-            outputRange: [0.7, 0], // Memudar dari 70% ke 0%
-        })
+            outputRange: [0.6, 0],
+        }),
     };
 
     // Style untuk gelombang kedua (dalam), dibuat delay
     const pulseStyle2 = {
-        transform: [{
-            scale: pulseAnim.interpolate({
-                inputRange: [0, 0.5, 1], // Mulai animasi setelah 50% durasi
-                outputRange: [0, 0, 1],
-            })
-        }],
+        transform: [
+            {
+                scale: pulseAnim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0.7, 0.7, 1.5],
+                }),
+            },
+        ],
         opacity: pulseAnim.interpolate({
-            inputRange: [0, 0.5, 1], // Muncul setelah 50% durasi
-            outputRange: [0, 0.7, 0],
-        })
+            inputRange: [0, 0.5, 1],
+            outputRange: [0, 0.5, 0],
+        }),
     };
 
     // --- Recenter Button Pulse Animation ---
@@ -255,30 +303,23 @@ export default function HomeScreen() {
         })
     };
 
-    // --- Filter Animation ---
-    const filterAnim = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        Animated.timing(filterAnim, {
-            toValue: isFilterOpen ? 1 : 0,
-            duration: 300,
-            useNativeDriver: false, // Diperlukan untuk animasi layout seperti translateY
-        }).start();
-    }, [isFilterOpen]);
-
     // Generate dummy markers when location is available
     useEffect(() => {
-        if (!latitude || !longitude || markers.length > 0) {
+        if (!userLatitude || !userLongitude || markers.length > 0) {
             return;
         }
 
+        // Note: Using `any[]` to add `created_at`. You might want to update the `DummyMarker` type definition.
         const dummyData: DummyMarker[] = [];
         const names = ["Joko", "Budi", "Siti", "Ani", "Eka", "Dwi", "Tri", "Catur", "Panca", "Satya"];
         const categories = Object.keys(CATEGORIES) as CategoryKey[];
 
         for (let i = 0; i < 10; i++) {
             const randomCategory = categories[i % categories.length];
-            const randomLocation = generateRandomPoint({ lat: latitude, lon: longitude }, 2000); // 2km radius
+            const randomLocation = generateRandomPoint({ lat: userLatitude, lon: userLongitude }, 2000); // 2km radius
+            const randomPastDate = new Date();
+            randomPastDate.setHours(randomPastDate.getHours() - Math.random() * 24);
+
             dummyData.push({
                 id: `user-${i}`,
                 ...randomLocation,
@@ -286,12 +327,14 @@ export default function HomeScreen() {
                 avatarUrl: `https://i.pravatar.cc/150?u=user${i}`,
                 category: randomCategory,
                 color: CATEGORIES[randomCategory].color,
+                is_live: i % 2 === 0, // Memperbaiki logika agar sesuai dengan komentar
+                created_at: randomPastDate.toISOString(),
             });
         }
 
         setMarkers(dummyData);
 
-    }, [latitude, longitude]);
+    }, [userLatitude, userLongitude]);
 
     // Helper function to generate random points within a radius
     const generateRandomPoint = (center: { lat: number, lon: number }, radius: number): { latitude: number, longitude: number } => {
@@ -351,7 +394,7 @@ export default function HomeScreen() {
                 bearing: 15,
             });
         } catch (error) {
-            console.log(error);
+            console.log("Error occurred while requesting location:", error);
         }
     };
 
@@ -372,8 +415,8 @@ export default function HomeScreen() {
 
     const recenter = () => {
         if (
-            latitude === null ||
-            longitude === null
+            userLatitude === null ||
+            userLongitude === null
         ) {
             Alert.alert(
                 t.alerts.locationUnavailableTitle,
@@ -385,27 +428,131 @@ export default function HomeScreen() {
         // Perintahkan kamera untuk "terbang" ke lokasi dengan animasi yang mulus
         cameraRef.current?.flyTo(
             {
-                center: [longitude, latitude],
+                center: [userLongitude, userLatitude],
                 duration: 1000,
             },
         );
         setIsMapCentered(true);
     };
 
-    const filteredMarkers = markers.filter(marker => visibleCategories.includes(marker.category as CategoryKey));
+    const filteredMarkers = markers.filter(marker => {
+        const categoryMatch = visibleCategories.includes(marker.category as CategoryKey);
+
+        const liveStatusMatch =
+            liveFilterStatus === 'all' ||
+            (liveFilterStatus === 'live' && marker.is_live) ||
+            (liveFilterStatus === 'regular' && !marker.is_live);
+
+        const radiusMatch = (() => {
+            if (!userLatitude || !userLongitude) return true; // Don't filter by radius if user location is not available
+            const distance = getDistanceInMeters(
+                userLatitude,
+                userLongitude,
+                marker.latitude,
+                marker.longitude
+            );
+            return distance <= filterRadius;
+        })();
+        return categoryMatch && liveStatusMatch && radiusMatch;
+    });
+
+    const mapItems = useMemo(() => {
+        return clusterMarkers(filteredMarkers, currentZoom);
+    }, [filteredMarkers, currentZoom]);
+
+    const ClusterModal = () => (
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={clusterVisible}
+            onRequestClose={() => {
+                setClusterVisible(false);
+            }}
+        >
+            <TouchableWithoutFeedback onPress={() => setClusterVisible(false)}>
+                <View className="flex-1 justify-center items-center bg-black/60 px-5">
+                    {/* This inner Touchable is to prevent the modal content from closing when pressed */}
+                    <TouchableWithoutFeedback>
+                        <View className="w-full max-h-[60%] bg-gray-50 rounded-3xl p-5 shadow-lg">
+                            <View className="flex-row justify-between items-center mb-4">
+                                <Text className="text-xl font-bold text-neutral-800">
+                                    {t.modal.viewOnMap} ({selectedCluster.length})
+                                </Text>
+                                <TouchableOpacity
+                                    onPress={() => setClusterVisible(false)}
+                                    className="h-9 w-9 bg-gray-200 rounded-full items-center justify-center"
+                                >
+                                    <Ionicons name="close" size={22} color="#555" />
+                                </TouchableOpacity>
+                            </View>
+
+                            <FlatList
+                                data={selectedCluster}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setClusterVisible(false);
+                                            // Tunggu sebentar agar modal sempat tertutup sebelum bottom sheet muncul
+                                            setTimeout(() => openStatus(item.id), 150);
+                                        }}
+                                        className="flex-row items-center bg-white rounded-2xl mb-3 shadow-sm overflow-hidden"
+                                        activeOpacity={0.8}
+                                    >
+                                        {/* Color bar */}
+                                        <View style={{ width: 6, height: '100%', backgroundColor: item.color }} />
+                                        <Image
+                                            source={{ uri: item.avatarUrl }}
+                                            className="h-12 w-12 rounded-full mx-3"
+                                        />
+                                        <View className="flex-1 py-3">
+                                            <Text className="font-bold text-base text-neutral-800">{item.name}</Text>
+                                            <View className="flex-row items-center mt-1">
+                                                <Text className="text-sm text-neutral-500">
+                                                    {getDistance(userLatitude!, userLongitude!, item.latitude, item.longitude)}
+                                                </Text>
+                                                <Text className="text-sm text-neutral-400 mx-1">·</Text>
+                                                <Text className="text-sm text-neutral-500">
+                                                    {formatTimeAgo(item.created_at || new Date().toISOString())}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <View className="px-4">
+                                            <Ionicons name="chevron-forward" size={22} color="#D1D5DB" />
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+                                showsVerticalScrollIndicator={false}
+                            />
+                        </View>
+                    </TouchableWithoutFeedback>
+                </View>
+            </TouchableWithoutFeedback>
+        </Modal>
+    );
 
     return (
         <SafeAreaView style={{ flex: 1 }} edges={["top", "left", "right"]}>
             <View className="flex-1" >
                 <Map
+                    ref={mapRef}
                     mapStyle={primaryMapStyle as any}
+
                     style={{ height: "110%" }}
                     onTouchMove={handleMapMove}
                     onTouchEnd={handleMapMove}
+                    onRegionIsChanging={async (e) => {
+                        if (!mapRef.current) return;
+                        const zoom = await mapRef.current?.getZoom();
+
+                        setCurrentZoom(zoom)
+                    }}
                 >
                     <Camera
                         ref={cameraRef}
                         duration={300}
+                        minZoom={8}
+                        maxZoom={15}
                         center={
                             cameraConfig.centerCoordinate
                         }
@@ -413,6 +560,7 @@ export default function HomeScreen() {
                         zoom={cameraConfig.zoomLevel}
                         pitch={cameraConfig.pitch}
                         bearing={cameraConfig.bearing}
+
                     />
                     {
                         isRouteMode && routeCoordinates.length > 0 && (
@@ -423,9 +571,9 @@ export default function HomeScreen() {
 
                     {/* User Location Marker */}
                     {hasPermission &&
-                        latitude &&
-                        longitude && (
-                            <Marker lngLat={[longitude, latitude]} anchor={"center"}>
+                        userLatitude &&
+                        userLongitude && (
+                            <Marker lngLat={[userLongitude, userLatitude]} anchor={"center"}>
                                 <View className="w-24 h-24 items-center justify-center">
                                     {/* Gelombang 1 */}
                                     <Animated.View
@@ -444,26 +592,186 @@ export default function HomeScreen() {
                         )}
 
                     {/* Dummy Friend Markers */}
-                    {filteredMarkers.map((marker) => (
-                        <Marker
-                            key={marker.id}
-                            id={marker.id}
-                            lngLat={[marker.longitude, marker.latitude]}
-                        >
-                            <TouchableOpacity onPress={() => openStatus(marker.id)} activeOpacity={0.9}>
-                                <View className="items-center">
-                                    <Image
-                                        source={{ uri: marker.avatarUrl }}
-                                        className="h-12 w-12 rounded-full border-2 shadow-lg"
-                                        style={{ borderColor: marker.color }}
-                                    />
-                                    <Text className="mt-1 bg-white/80 px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm text-neutral-700">
-                                        {marker.name}
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
-                        </Marker>
-                    ))}
+                    {
+                        mapItems.map((item) => {
+
+                            if ("members" in item) {
+
+                                const hasLive =
+                                    item.members.some(x => x.is_live);
+
+                                return (
+
+                                    <Marker
+                                        key={item.id}
+                                        lngLat={[
+                                            item.longitude,
+                                            item.latitude
+                                        ]}
+                                        anchor="center"
+                                    >
+
+                                        <TouchableOpacity
+                                            activeOpacity={0.9}
+                                            onPress={() => {
+
+                                                setSelectedCluster(
+                                                    item.members
+                                                );
+
+                                                setClusterVisible(true);
+
+                                            }}
+                                        >
+
+                                            <View
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 30,
+                                                    backgroundColor: "#132648",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    borderWidth: 3,
+                                                    borderColor: hasLive
+                                                        ? "#22c55e"
+                                                        : "white",
+                                                }}
+                                            >
+
+                                                <Text
+                                                    style={{
+                                                        color: "white",
+                                                        fontWeight: "bold",
+                                                        fontSize: 18,
+                                                    }}
+                                                >
+                                                    +{item.members.length}
+                                                </Text>
+
+                                            </View>
+
+                                        </TouchableOpacity>
+
+                                    </Marker>
+
+                                );
+
+                            }
+
+
+
+                            const marker = item;
+
+                            return (
+                                <Marker
+                                    key={marker.id}
+                                    id={marker.id}
+                                    lngLat={[marker.longitude, marker.latitude]}
+                                    anchor="center"
+                                >
+                                    <View
+                                        style={{
+                                            width: 100,
+                                            height: 100,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            overflow: "visible",
+                                        }}
+                                    >
+                                        {marker.is_live && (
+                                            <>
+                                                <Animated.View
+                                                    style={[
+                                                        {
+                                                            position: "absolute",
+                                                            width: 90,
+                                                            height: 90,
+                                                            borderRadius: 45,
+                                                            backgroundColor: marker.color,
+                                                            bottom: 20, // Menggeser pulse agar lebih pas dengan avatar
+                                                            opacity: 0.25,
+                                                        },
+                                                        pulseStyle1,
+                                                    ]}
+                                                />
+
+                                                <Animated.View
+                                                    style={[
+                                                        {
+                                                            position: "absolute",
+                                                            width: 90,
+                                                            height: 90,
+                                                            borderRadius: 45,
+                                                            backgroundColor: marker.color,
+                                                            bottom: 20, // Menggeser pulse agar lebih pas dengan avatar
+                                                            opacity: 0.15,
+                                                        },
+                                                        pulseStyle2,
+                                                    ]}
+                                                />
+                                            </>
+                                        )}
+
+                                        <TouchableOpacity
+                                            activeOpacity={0.9}
+                                            onPress={() => openStatus(marker.id)}
+                                        >
+                                            <View
+                                                style={{
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <Image
+                                                    source={{ uri: marker.avatarUrl }}
+                                                    style={{
+                                                        width: 48,
+                                                        height: 48,
+                                                        borderRadius: 24,
+                                                        borderWidth: 2,
+                                                        borderColor: marker.color,
+                                                    }}
+                                                />
+
+                                                <View
+                                                    style={{
+                                                        width: 0,
+                                                        height: 0,
+                                                        borderLeftWidth: 8,
+                                                        borderRightWidth: 8,
+                                                        borderTopWidth: 10,
+                                                        borderLeftColor: "transparent",
+                                                        borderRightColor: "transparent",
+                                                        borderTopColor: marker.color,
+                                                        marginTop: -2,
+                                                    }}
+                                                />
+
+                                                <View
+                                                    style={{
+                                                        marginTop: 4,
+                                                        backgroundColor: "rgba(255,255,255,.9)",
+                                                        borderRadius: 999,
+                                                        paddingHorizontal: 8,
+                                                        paddingVertical: 2,
+                                                    }}
+                                                >
+                                                    <Text
+                                                        style={{
+                                                            fontSize: 12,
+                                                            fontWeight: "600",
+                                                        }}
+                                                    >
+                                                        {marker.name}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    </View>
+                                </Marker>
+                            )
+                        })
+                    }
 
 
 
@@ -544,119 +852,32 @@ export default function HomeScreen() {
                     />
                 </TouchableOpacity>
 
-                {/* FILTER BUTTONS */}
-                <View className="absolute bottom-32 left-6 items-center">
-                    {/* Tombol untuk setiap kategori */}
-                    {ALL_CATEGORIES.map((key, index) => {
-                        const isVisible = visibleCategories.includes(key);
-                        const category = CATEGORIES[key];
-
-                        const buttonStyle = {
-                            transform: [
-                                {
-                                    scale: filterAnim,
-                                },
-                                {
-                                    translateY: filterAnim.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, -(index + 1) * 60], // Bergerak ke atas
-                                    }),
-                                },
-                            ],
-                            opacity: filterAnim,
-                        };
-
-                        return (
-                            <Animated.View style={buttonStyle} key={key} className="absolute">
-                                <TouchableOpacity
-                                    onPress={() => toggleCategory(key)}
-                                    className={`h-12 w-12 rounded-full items-center justify-center shadow-md ${isVisible ? 'bg-white' : 'bg-gray-300'}`}
-                                >
-                                    <Ionicons name={category.icon} size={22} color={isVisible ? category.color : '#666'} />
-                                </TouchableOpacity>
-                            </Animated.View>
-                        );
-                    })}
-
-                    {/* Tombol utama filter */}
-                    <TouchableOpacity
-                        onPress={() => setIsFilterOpen(!isFilterOpen)}
-                        className="h-14 w-14 items-center justify-center rounded-full bg-white shadow-md"
-                        activeOpacity={0.8}
-                    >
-                        <Animated.View style={{ transform: [{ rotate: filterAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '45deg'] }) }] }}>
-                            <Ionicons name={isFilterOpen ? "close" : "filter"} size={22} color={isFilterOpen ? "red" : "#132648"} />
-                        </Animated.View>
-                    </TouchableOpacity>
-                </View>
-
-                {/* {isRouteMode && (
-                    <TouchableOpacity
-                        onPress={exitRoute}
-                        className="
-                absolute
-                top-32
-                left-4
-                right-4
-                h-14
-                bg-red-500
-                rounded-2xl
-                flex-row
-                items-center
-                justify-center
-            "
-                    >
-                        <Ionicons
-                            name="close"
-                            size={20}
-                            color="white"
-                        />
-
-                        <Text className="text-white font-semibold ml-2">
-                            Exit Route
-                        </Text>
-                    </TouchableOpacity>
-                )} */}
-
-                {/* MARKER DETAIL MODAL */}
-                {/* {selectedMarker && (
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={selectedMarker !== null}
-                    onRequestClose={() => setSelectedMarker(null)}
+                {/* FILTER BUTTON */}
+                <TouchableOpacity
+                    onPress={() => setIsFilterModalVisible(true)}
+                    className="absolute bottom-32 left-6 h-14 w-14 items-center justify-center rounded-full bg-white shadow-md"
+                    activeOpacity={0.8}
                 >
-                    <TouchableOpacity
-                        className="flex-1"
-                        activeOpacity={1}
-                        onPressOut={() => setSelectedMarker(null)}
-                    >
-                        <View className="flex-1 justify-end">
-                            <TouchableWithoutFeedback>
-                                <View className="bg-white rounded-t-3xl p-5 shadow-lg pt-16">
-                                    <TouchableOpacity onPress={() => openStatus(selectedMarker.id)} className="absolute top-[-98px] self-center">
-                                        <Image
-                                            source={{ uri: selectedMarker.avatarUrl }}
-                                            className="h-40 w-40 rounded-full border-4 border-yellow-400 shadow-xl"
-                                        />
-                                    </TouchableOpacity>
+                    <Ionicons name="filter" size={22} color="#132648" />
+                </TouchableOpacity>
 
-                                    <View className="items-center">
-                                        <Text className="text-2xl font-bold text-gray-800">{selectedMarker.name}</Text>
-                                        <Text className="text-base text-gray-500">{CATEGORIES[selectedMarker.category as CategoryKey].name}</Text>
-                                    </View>
 
-                                    <View className="flex-row justify-around mt-6">
-                                       <ModalActionButton icon="navigate-outline" label={t.modal.route} onPress={handleRoute} /> 
-            <ModalActionButton icon="chatbubble-ellipses-outline" label={t.modal.chat} onPress={handleChat} />
-            <ModalActionButton icon="map-outline" label={t.modal.viewOnMap} onPress={handleViewOnMap} />
-        </View>
-                                </View >
-                            </TouchableWithoutFeedback >
-                        </View >
-                    </TouchableOpacity >
-                </Modal >
-            )} */}
+                {/* Modal untuk menampilkan anggota cluster */}
+                <ClusterModal />
+
+                {/* Modal untuk filter */}
+                <FilterModal
+                    isVisible={isFilterModalVisible}
+                    onClose={() => setIsFilterModalVisible(false)}
+                    initialCategories={visibleCategories}
+                    initialLiveStatus={liveFilterStatus}
+                    initialRadius={filterRadius}
+                    onApply={(categories, liveStatus, radius) => {
+                        setVisibleCategories(categories);
+                        setLiveFilterStatus(liveStatus);
+                        setFilterRadius(radius);
+                        setIsFilterModalVisible(false);
+                    }} />
             </View>
         </SafeAreaView>
     );
