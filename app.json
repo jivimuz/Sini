@@ -4,11 +4,11 @@
     "slug": "Sini",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Sini-logo.png",
+    "icon": "./assets/images/Sini-logo.jpg",
     "scheme": "sini",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/images/Sini-logo.png",
+      "icon": "./assets/images/Sini-logo.jpg",
       "supportsTablet": true,
       "bundleIdentifier": "com.sini.app"
     },
@@ -16,7 +16,7 @@
       "package": "com.sini.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Sini-logo.png",
+        "foregroundImage": "./assets/images/Sini-logo.jpg",
         "backgroundImage": "./assets/images/Sini-icon.png",
         "monochromeImage": "./assets/images/Sini-icon.png"
       },

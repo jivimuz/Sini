@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { useProfileModalStore } from '@/stores/profile.modal.store';
+import { useProfileModalStore } from '@/stores/profileModal.store';
 import { useUserStore } from '@/stores/user.store';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from "expo-linking";

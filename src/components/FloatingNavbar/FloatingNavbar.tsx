@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import floatingNavbar from "./locales";
 import { Lang, useLang } from "@/stores/lang.store";
+import { useShowNavbar } from "@/stores/showNavBar.store";
 
 type FloatingNavbarProps = {
     activeTab: string;
@@ -94,6 +95,8 @@ const FloatingNavbar = ({ activeTab, setActiveTab }: FloatingNavbarProps) => {
 
     // Mendefinisikan nama tab berdasarkan bahasa yang aktif
     const tabNames = floatingNavbar[lang].floatingNavbar.buttonTitle;
+    const { shownNavbar } = useShowNavbar();
+    const [isVisible, setIsVisible] = React.useState(shownNavbar);
 
     const tabs: Tab[] = [
         { title: tabNames.home, name: "Home", icon: "home", activeIcon: "home" },
@@ -103,6 +106,13 @@ const FloatingNavbar = ({ activeTab, setActiveTab }: FloatingNavbarProps) => {
         { title: tabNames.profile, name: "Profile", icon: "user", activeIcon: "user" },
     ];
 
+    useEffect(() => {
+        setIsVisible(shownNavbar);
+    }, [shownNavbar]);
+
+    if (!isVisible) {
+        return null; // Jika navbar tidak ditampilkan, kembalikan null
+    }
     return (
         <View
             style={[

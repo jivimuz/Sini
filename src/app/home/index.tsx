@@ -37,6 +37,7 @@ import { useLocationStore } from "@/stores/location.store";
 import { useUserStore } from "@/stores/user.store";
 import { UserStatus } from "@/types/userStatus.type";
 import { useFilterStore } from "./stores/filter.store";
+import { useShowNavbar } from "@/stores/showNavBar.store";
 
 
 
@@ -146,7 +147,11 @@ export default function HomeScreen() {
             pitch: 0,
             bearing: 0,
         });
+    const { setNavbar } = useShowNavbar();
 
+    useEffect(() => {
+        setNavbar(true);
+    }, []);
     useEffect(() => {
         requestLocation();
     }, []);

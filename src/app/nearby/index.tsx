@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { useUserStore } from '@/stores/user.store';
 import { UserStatus } from '@/types/userStatus.type';
 import { useLocationStore } from '@/stores/location.store';
 import { useFilterStore } from '../home/stores/filter.store';
+import { useShowNavbar } from '@/stores/showNavBar.store';
 
 // Helper function to calculate distance
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -89,7 +90,11 @@ const NearbyScreen = () => {
             setRefreshing(false);
         }, 1000);
     }, []);
+    const { setNavbar } = useShowNavbar();
 
+    useEffect(() => {
+        setNavbar(true);
+    }, []);
     const filteredUsers = useMemo(() => {
         return users
             .filter((user) => {

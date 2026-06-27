@@ -26,7 +26,7 @@ import { useLang } from "@/stores/lang.store";
 import locales from "./locales";
 import { useUserStore } from "@/stores/user.store";
 import { useLocationStore } from "@/stores/location.store";
-import { useProfileModalStore } from "@/stores/profile.modal.store";
+import { useProfileModalStore } from "@/stores/profileModal.store";
 
 // Helper untuk menghitung waktu yang telah berlalu.
 // Fungsi ini berasumsi bahwa objek locale `t` memiliki struktur seperti:

@@ -9,7 +9,7 @@ const CustomSplashScreen = ({ onLayout }: CustomSplashScreenProps) => {
     return (
         <SafeAreaView style={styles.container} onLayout={onLayout}>
             <Image
-                source={require('@/../assets/images/Sini-splash.png')}
+                source={require('@/../assets/images/Sini-splash.jpg')}
                 style={styles.image}
                 resizeMode="cover"
             />

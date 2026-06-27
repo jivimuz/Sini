@@ -1,300 +1,142 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useRef } from "react";
 import {
-    View,
-    Text,
-    FlatList,
-    TouchableOpacity,
-    TextInput,
     KeyboardAvoidingView,
     Platform,
+    FlatList,
+    View,
+    ImageBackground,
 } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 
-const messages = [
-    {
-        id: "1",
-        type: "text",
-        sender: "other",
-        text: "Lagi dimana?",
-        time: "09:21",
-    },
-    {
-        id: "2",
-        type: "text",
-        sender: "me",
-        text: "Di Senayan nih 👀",
-        time: "09:22",
-    },
-    {
-        id: "3",
-        type: "location",
-        sender: "other",
-        locationName: "Senayan City",
-        distance: "120m",
-        time: "09:23",
-    },
-    {
-        id: "4",
-        type: "text",
-        sender: "me",
-        text: "Otw kesana 🚗",
-        time: "09:24",
-    },
-];
+import ChatHeader from "@/components/Chat/ChatHeader";
+import MessageBubble from "@/components/Chat/MessageBubble";
+import LocationBubble from "@/components/Chat/LocationBubble";
+import DateSeparator from "@/components/Chat/DateSeparator";
+import TypingIndicator from "@/components/Chat/TypingIndicator";
+import ChatInput from "@/components/Chat/ChatInput";
+import AttachmentSheet from "@/components/Chat/AttachmentSheet";
+
+import { ChatMessage } from "../../types/chat";
+import { useChatStore } from "../../stores/chat.store";
+import { useShowNavbar } from "@/stores/showNavBar.store";
+import { useUserStore } from "@/stores/user.store";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatRoomScreen() {
-    const [message, setMessage] = useState("");
+    // Asumsikan ID pengguna saat ini adalah "1" (sebaiknya diambil dari state/auth)
+    const currentUserId = "1";
+    const { id: otherUserId } = useLocalSearchParams<{ id: string }>();
 
-    const renderMessage = ({ item }: any) => {
-        if (item.type === "location") {
+    const {
+        messages,
+        typing,
+        sendMessage,
+        sendLocation,
+    } = useChatStore();
+
+    const { getUserById } = useUserStore();
+
+    const otherUser = getUserById(otherUserId ?? "");
+
+    const flatListRef = useRef<FlatList>(null);
+
+    const { setNavbar } = useShowNavbar();
+
+    useEffect(() => {
+        setNavbar(false);
+
+        return () => setNavbar(true);
+    }, []);
+
+    useEffect(() => {
+        flatListRef.current?.scrollToEnd({
+            animated: true,
+        });
+    }, [messages]);
+
+    const renderItem = ({ item }: { item: ChatMessage }) => {
+        if (item.type === "date") {
             return (
-                <View className="mb-4 items-start">
-                    <TouchableOpacity
-                        className="
-                        bg-white
-                        rounded-[28px]
-                        p-4
-                        max-w-[80%]
-                        "
-                    >
-                        <Text className="text-2xl">
-                            📍
-                        </Text>
+                <DateSeparator
+                    title={item.label ?? ""}
+                    key={item.id}
+                />
+            );
+        }
 
-                        <Text className="mt-2 font-semibold text-base">
-                            {item.locationName}
-                        </Text>
-
-                        <Text className="mt-1 text-neutral-500">
-                            {item.distance} dari kamu
-                        </Text>
-
-                        <TouchableOpacity
-                            className="
-                            mt-3
-                            bg-[#FFD84D]
-                            rounded-full
-                            py-3
-                            "
-                        >
-                            <Text className="text-center font-semibold">
-                                Arahkan
-                            </Text>
-                        </TouchableOpacity>
-                    </TouchableOpacity>
-
-                    <Text className="text-xs text-neutral-400 mt-1 ml-2">
-                        {item.time}
-                    </Text>
-                </View>
+        // [FIX] Pengecekan ini penting untuk mencegah crash jika data lokasi tidak lengkap
+        if (item.type === "location" && item.location?.latitude && item.location?.longitude) {
+            return (
+                <LocationBubble
+                    title={item.location.title ?? "Lokasi Berbagi"}
+                    latitude={item.location.latitude}
+                    longitude={item.location.longitude}
+                    distance={item.location.distance ?? ""}
+                    isMe={item.senderId === currentUserId}
+                    onPress={() => console.log("TODO: Implement route view")}
+                />
             );
         }
 
         return (
-            <View
-                className={`mb-4 ${item.sender === "me"
-                    ? "items-end"
-                    : "items-start"
-                    }`}
-            >
-                <View
-                    className={`
-                    max-w-[80%]
-                    px-4
-                    py-3
-                    rounded-[28px]
-                    ${item.sender === "me"
-                            ? "bg-[#FFD84D]"
-                            : "bg-white"
-                        }
-                    `}
-                >
-                    <Text className="text-[15px] leading-6">
-                        {item.text}
-                    </Text>
-                </View>
-
-                <Text
-                    className={`
-                    text-xs
-                    text-neutral-400
-                    mt-1
-                    ${item.sender === "me"
-                            ? "mr-2"
-                            : "ml-2"
-                        }
-                    `}
-                >
-                    {item.time}
-                </Text>
-            </View>
+            <MessageBubble
+                message={item}
+                isMe={item.senderId === currentUserId}
+                onLongPress={(message) => {
+                    console.log(message);
+                }}
+            />
         );
     };
 
     return (
         <KeyboardAvoidingView
-            className="flex-1 bg-[#FFFDF5]"
-            behavior={
-                Platform.OS === "ios"
-                    ? "padding"
-                    : undefined
-            }
+            className="flex-1"
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        // keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
-            {/* HEADER */}
 
-            <View
-                className="
-                pt-16
-                px-5
-                pb-4
-                flex-row
-                items-center
-                "
+            {/* 2. SafeAreaView hanya membungkus Header agar teks jam/baterai hp aman */}
+            <SafeAreaView edges={['top']} className="bg-white shadow-sm">
+                <ChatHeader
+                    name={otherUser?.name ?? "Udin"}
+                    avatar={otherUser?.avatarUrl ?? "https://randomuser.me/api/portraits/men/1.jpg"}
+                    online={otherUser?.is_live}
+                />
+            </SafeAreaView>
+            <ImageBackground
+                source={require("@/../assets/images/bg-chat.jpeg")}
+                className="flex-1"
+                resizeMode="cover"
             >
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                >
-                    <Ionicons
-                        name="chevron-back"
-                        size={28}
-                    />
-                </TouchableOpacity>
-
-                <View
-                    className="
-                    ml-3
-                    w-12
-                    h-12
-                    rounded-full
-                    bg-[#FFE98A]
-                    "
+                {/* 3. FlatList otomatis menciut karena flex-1 */}
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    className="flex-1"
+                    contentContainerStyle={{
+                        padding: 16,
+                        paddingBottom: 20,
+                    }}
+                    showsVerticalScrollIndicator={false}
                 />
 
-                <View className="ml-3 flex-1">
-                    <Text className="font-bold text-lg">
-                        Sarah
-                    </Text>
+                {typing && (
+                    <TypingIndicator />
+                )}
 
-                    <Text className="text-xs text-green-500">
-                        ● Online • 120m
-                    </Text>
-                </View>
+                {/* 4. ChatInput akan menempel tepat di atas keyboard */}
+                <ChatInput
+                    onSend={sendMessage}
+                />
 
-                <TouchableOpacity>
-                    <Ionicons
-                        name="call-outline"
-                        size={22}
-                    />
-                </TouchableOpacity>
-            </View>
-
-            {/* CHAT */}
-
-            <FlatList
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={(item) => item.id}
-                className="flex-1 px-4"
-                contentContainerStyle={{
-                    paddingTop: 10,
-                    paddingBottom: 20,
-                }}
-                showsVerticalScrollIndicator={false}
-            />
-
-            {/* QUICK ACTION */}
-
-            <View className="px-4 pb-3">
-                <View className="flex-row mb-3">
-                    <TouchableOpacity
-                        className="
-                        bg-white
-                        rounded-full
-                        px-4
-                        py-2
-                        mr-2
-                        "
-                    >
-                        <Text>
-                            📍 Lokasi
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        className="
-                        bg-white
-                        rounded-full
-                        px-4
-                        py-2
-                        mr-2
-                        "
-                    >
-                        <Text>
-                            📸 Kamera
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        className="
-                        bg-white
-                        rounded-full
-                        px-4
-                        py-2
-                        "
-                    >
-                        <Text>
-                            😊 Status
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* INPUT */}
-
-                <View
-                    className="
-                    bg-white
-                    rounded-full
-                    px-3
-                    py-2
-                    flex-row
-                    items-center
-                    "
-                >
-                    <TouchableOpacity>
-                        <Ionicons
-                            name="camera-outline"
-                            size={22}
-                        />
-                    </TouchableOpacity>
-
-                    <TextInput
-                        value={message}
-                        onChangeText={setMessage}
-                        placeholder="Tulis pesan..."
-                        className="flex-1 px-3"
-                    />
-
-                    <TouchableOpacity
-                        className="
-                        w-10
-                        h-10
-                        rounded-full
-                        bg-[#FFD84D]
-                        items-center
-                        justify-center
-                        "
-                    >
-                        <Ionicons
-                            name="send"
-                            size={18}
-                            color="#000"
-                        />
-                    </TouchableOpacity>
-                </View>
-            </View>
+                <AttachmentSheet
+                    onSendLocation={sendLocation}
+                />
+            </ImageBackground>
         </KeyboardAvoidingView>
     );
 }

@@ -1,11 +1,12 @@
 import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Lang, useLang } from '@/stores/lang.store'
 import locales from './locales'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '@/constants/theme'
 import { useBarColor } from '@/stores/barColor.store'
+import { useShowNavbar } from '@/stores/showNavBar.store'
 
 // --- Komponen untuk item menu ---
 type MenuItemProps = {
@@ -53,6 +54,11 @@ const ProfileScreen = () => {
         setTimeout(() => {
             setRefreshing(false);
         }, 1000);
+    }, []);
+    const { setNavbar } = useShowNavbar();
+
+    useEffect(() => {
+        setNavbar(true);
     }, []);
 
     // --- Komponen untuk tombol pilihan bahasa ---
