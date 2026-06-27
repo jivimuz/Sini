@@ -1,4 +1,4 @@
-import { DummyMarker } from "../stores/marker.store";
+import { DummyMarker } from "../../../stores/marker.store";
 
 export type MarkerCluster = {
     id: string;

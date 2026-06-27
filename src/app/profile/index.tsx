@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, StatusBar } from 'react-native'
-import React from 'react'
+import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native'
+import React, { useCallback, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Lang, useLang } from '@/stores/lang.store'
 import locales from './locales'
@@ -44,6 +44,16 @@ const MenuItem = ({ icon, label, onPress, isLogout = false }: MenuItemProps) => 
 const ProfileScreen = () => {
     const { lang, setLang } = useLang();
     const t = locales[lang].profileScreen;
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        // Di sini Anda bisa menambahkan logika untuk memuat ulang data profil dari API
+        // Contoh: fetchProfileData().then(() => setRefreshing(false));
+        setTimeout(() => {
+            setRefreshing(false);
+        }, 1000);
+    }, []);
 
     // --- Komponen untuk tombol pilihan bahasa ---
     const LanguageButton = ({ targetLang, label }: { targetLang: Lang, label: string }) => (
@@ -58,16 +68,66 @@ const ProfileScreen = () => {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1 }} className="bg-primary" edges={["top", "left", "right"]}>
+        <SafeAreaView style={{ flex: 1 }} className="g-gray-100" edges={["top", "left", "right"]}>
             <View className="flex-1 bg-gray-100">
-                <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-                    <View className="bg-primary items-center pt-8 pb-12  rounded-b-3xl">
-                        <Image
-                            source={{ uri: 'https://i.pravatar.cc/150?u=sini-app' }} // Placeholder image
-                            className="w-24 h-24 rounded-full border-4 border-white mb-3"
-                        />
-                        <Text className="text-2xl font-bold text-gray-900">Jivi Muz</Text>
-                        <Text className="text-base text-gray-800">jivimuz@example.com</Text>
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9CA3AF" />
+                    }>
+                    <View className="items-center pt-12 pb-8">
+
+                        <View className="relative">
+
+                            <Image
+                                source={{
+                                    uri: "https://i.pravatar.cc/200",
+                                }}
+                                className="
+                                w-28    
+                                h-28
+                                rounded-full
+                                border-4
+                                border-[#FFD84D]
+                                "
+                            />
+
+                            <TouchableOpacity
+                                className="
+                                absolute
+                                bottom-0
+                                right-0
+                                w-10
+                                h-10
+                                rounded-full
+                                bg-[#FFD84D]
+                                items-center
+                                justify-center
+                                "
+                            >
+                                <Ionicons
+                                    name="camera"
+                                    size={18}
+                                />
+                            </TouchableOpacity>
+
+                        </View>
+
+                        <Text
+                            className="
+        mt-5
+        text-2xl
+        font-bold
+        "
+                        >
+                            Jivi Muz
+                        </Text>
+
+                        <Text className="text-neutral-500">
+                            @jivimuz
+                        </Text>
+
                     </View>
 
                     {/* Gunakan SafeAreaView di sini untuk melindungi konten di bawah header */}

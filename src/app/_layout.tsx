@@ -11,6 +11,7 @@ import ProfileScreen from "./profile";
 import StatusBottomSheet from "@/components/Status/StatusBottomSheet";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ChatScreen from "./chat";
+import UserProfileModal from "@/components/UserProfileModal/UserProfileModal";
 
 
 export default function TabLayout() {
@@ -49,6 +50,7 @@ export default function TabLayout() {
       </Animated.View>
       <FloatingNavbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <StatusBottomSheet />
+      <UserProfileModal />
     </GestureHandlerRootView>
   );
 }

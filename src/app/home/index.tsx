@@ -25,21 +25,18 @@ import locales from "./locales";
 
 import primaryMapStyle from "@/../assets/map/primary-map.json";
 
-import {
-    useLocationStore,
-} from "@/app/home/stores/location.store";
-import {
-    DummyMarker, useMarkerStore,
-} from "@/app/home/stores/marker.store";
 import { useIsNewNotif } from "./stores/notification.store";
 import { useRouteStore } from "./stores/route.store";
 import RouteLine from "@/components/RouteLine/RouteLine";
 import { useStatusStore } from "@/components/Status/stores/status.store";
-import { useBarColor } from "@/stores/barColor.store";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { clusterMarkers } from "./constants/clusterMarkers";
-import { ALL_CATEGORIES, CATEGORIES, CategoryKey, LiveFilterStatus } from "./constants/categories";
-import { FilterModal } from "./utils/FilterModal";
+import { clusterMarkers } from "../../constants/clusterMarkers";
+import { ALL_CATEGORIES, CATEGORIES, CategoryKey, LiveFilterStatus } from "../../constants/categories";
+import { FilterModal } from "@/components/FilterModal/FilterModal";
+import { useLocationStore } from "@/stores/location.store";
+import { useUserStore } from "@/stores/user.store";
+import { UserStatus } from "@/types/userStatus.type";
+import { useFilterStore } from "./filter.store";
 
 
 
@@ -49,7 +46,6 @@ const INDONESIA_CENTER: [number, number] = [
 ];
 
 export default function HomeScreen() {
-
     // Helper function to calculate distance
     const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         if (!lat1 || !lon1 || !lat2 || !lon2) return "";
@@ -114,49 +110,6 @@ export default function HomeScreen() {
     } = useRouteStore();
     const { openStatus } = useStatusStore();
 
-    const ModalActionButton = ({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap, label: string, onPress: () => void }) => (
-        <TouchableOpacity onPress={onPress} className="items-center space-y-2" activeOpacity={0.7}>
-            <View className="h-16 w-16 bg-yellow-100 rounded-full items-center justify-center">
-                <Ionicons name={icon} size={30} color="#132648" />
-            </View>
-            <Text className="text-sm font-semibold text-neutral-800">{label}</Text>
-        </TouchableOpacity>
-    );
-
-
-    const handleRoute = async () => {
-        const destination = {
-            latitude: -6.2088,
-            longitude: 106.8456,
-        };
-
-        const coordinates: [number, number][] = [
-            [106.8272, -6.1754],
-            [106.8300, -6.1800],
-            [106.8350, -6.1900],
-            [106.8456, -6.2088],
-        ];
-
-        startRoute(
-            destination,
-            coordinates
-        );
-    };
-
-    const handleChat = () => {
-        if (!selectedMarker) return;
-        // Placeholder untuk fungsionalitas chat
-        Alert.alert("Chat", `Mulai obrolan dengan ${selectedMarker.name}`);
-    };
-
-    const handleViewOnMap = () => {
-        if (!selectedMarker) return;
-        const { latitude, longitude } = selectedMarker;
-        // URL untuk membuka lokasi di Google Maps
-        const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-        Linking.openURL(url).catch(() => Alert.alert("Error", "Tidak dapat membuka peta."));
-    };
-
     const {
         latitude: userLatitude,
         longitude: userLongitude,
@@ -165,17 +118,20 @@ export default function HomeScreen() {
         hasPermission,
     } = useLocationStore();
 
-    const { markers, setMarkers } = useMarkerStore();
+    const { users, fetchUsers } = useUserStore();
     const { newNotif } = useIsNewNotif();
 
-    const [selectedMarker, setSelectedMarker] = useState<DummyMarker | null>(null);
-    const [visibleCategories, setVisibleCategories] = useState<CategoryKey[]>(ALL_CATEGORIES);
+    const {
+        visibleCategories,
+        liveFilterStatus,
+        filterRadius,
+        setFilters,
+    } = useFilterStore();
+
     const [isMapCentered, setIsMapCentered] = useState(true);
     const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-    const [liveFilterStatus, setLiveFilterStatus] = useState<LiveFilterStatus>('all');
-    const [filterRadius, setFilterRadius] = useState<number>(500); // in meters, 500m default
     const [selectedCluster, setSelectedCluster] =
-        useState<DummyMarker[]>([]);
+        useState<UserStatus[]>([]);
 
     const [clusterVisible, setClusterVisible] =
         useState(false);
@@ -194,6 +150,12 @@ export default function HomeScreen() {
     useEffect(() => {
         requestLocation();
     }, []);
+
+    useEffect(() => {
+        if (userLatitude && userLongitude) {
+            fetchUsers(userLatitude, userLongitude);
+        }
+    }, [userLatitude, userLongitude, fetchUsers]);
 
     const [currentZoom, setCurrentZoom] = useState(15);
 
@@ -303,59 +265,6 @@ export default function HomeScreen() {
         })
     };
 
-    // Generate dummy markers when location is available
-    useEffect(() => {
-        if (!userLatitude || !userLongitude || markers.length > 0) {
-            return;
-        }
-
-        // Note: Using `any[]` to add `created_at`. You might want to update the `DummyMarker` type definition.
-        const dummyData: DummyMarker[] = [];
-        const names = ["Joko", "Budi", "Siti", "Ani", "Eka", "Dwi", "Tri", "Catur", "Panca", "Satya"];
-        const categories = Object.keys(CATEGORIES) as CategoryKey[];
-
-        for (let i = 0; i < 10; i++) {
-            const randomCategory = categories[i % categories.length];
-            const randomLocation = generateRandomPoint({ lat: userLatitude, lon: userLongitude }, 2000); // 2km radius
-            const randomPastDate = new Date();
-            randomPastDate.setHours(randomPastDate.getHours() - Math.random() * 24);
-
-            dummyData.push({
-                id: `user-${i}`,
-                ...randomLocation,
-                name: names[i % names.length],
-                avatarUrl: `https://i.pravatar.cc/150?u=user${i}`,
-                category: randomCategory,
-                color: CATEGORIES[randomCategory].color,
-                is_live: i % 2 === 0, // Memperbaiki logika agar sesuai dengan komentar
-                created_at: randomPastDate.toISOString(),
-            });
-        }
-
-        setMarkers(dummyData);
-
-    }, [userLatitude, userLongitude]);
-
-    // Helper function to generate random points within a radius
-    const generateRandomPoint = (center: { lat: number, lon: number }, radius: number): { latitude: number, longitude: number } => {
-        const y0 = center.lat;
-        const x0 = center.lon;
-        // Convert radius from meters to degrees
-        const rd = radius / 111300;
-
-        const u = Math.random();
-        const v = Math.random();
-
-        const w = rd * Math.sqrt(u);
-        const t = 2 * Math.PI * v;
-        const x = w * Math.cos(t);
-        const y = w * Math.sin(t);
-
-        const new_x = x / Math.cos(y0 * Math.PI / 180);
-
-        return { latitude: y0 + y, longitude: x0 + new_x };
-    }
-
     const requestLocation = async () => {
         try {
             const { status } =
@@ -398,16 +307,16 @@ export default function HomeScreen() {
         }
     };
 
-    const toggleCategory = (category: CategoryKey) => {
-        setVisibleCategories(prev => {
-            const newCategories = prev.includes(category)
-                ? prev.filter(c => c !== category)
-                : [...prev, category];
+    // const toggleCategory = (category: CategoryKey) => {
+    //     setVisibleCategories(prev => {
+    //         const newCategories = prev.includes(category)
+    //             ? prev.filter(c => c !== category)
+    //             : [...prev, category];
 
-            // Pastikan minimal satu kategori selalu terpilih
-            return newCategories.length > 0 ? newCategories : prev;
-        });
-    };
+    //         // Pastikan minimal satu kategori selalu terpilih
+    //         return newCategories.length > 0 ? newCategories : prev;
+    //     });
+    // };
 
     const handleMapMove = (event: any) => {
         setIsMapCentered(false);
@@ -435,30 +344,32 @@ export default function HomeScreen() {
         setIsMapCentered(true);
     };
 
-    const filteredMarkers = markers.filter(marker => {
-        const categoryMatch = visibleCategories.includes(marker.category as CategoryKey);
+    const filteredUsers = useMemo(() => {
+        return users.filter(marker => {
+            const categoryMatch = visibleCategories.includes(marker.category as CategoryKey);
 
-        const liveStatusMatch =
-            liveFilterStatus === 'all' ||
-            (liveFilterStatus === 'live' && marker.is_live) ||
-            (liveFilterStatus === 'regular' && !marker.is_live);
+            const liveStatusMatch =
+                liveFilterStatus === 'all' ||
+                (liveFilterStatus === 'live' && marker.is_live) ||
+                (liveFilterStatus === 'regular' && !marker.is_live);
 
-        const radiusMatch = (() => {
-            if (!userLatitude || !userLongitude) return true; // Don't filter by radius if user location is not available
-            const distance = getDistanceInMeters(
-                userLatitude,
-                userLongitude,
-                marker.latitude,
-                marker.longitude
-            );
-            return distance <= filterRadius;
-        })();
-        return categoryMatch && liveStatusMatch && radiusMatch;
-    });
+            const radiusMatch = (() => {
+                if (!userLatitude || !userLongitude) return true; // Don't filter by radius if user location is not available
+                const distance = getDistanceInMeters(
+                    userLatitude,
+                    userLongitude,
+                    marker.latitude,
+                    marker.longitude
+                );
+                return distance <= filterRadius;
+            })();
+            return categoryMatch && liveStatusMatch && radiusMatch;
+        });
+    }, [users, visibleCategories, liveFilterStatus, filterRadius, userLatitude, userLongitude]);
 
     const mapItems = useMemo(() => {
-        return clusterMarkers(filteredMarkers, currentZoom);
-    }, [filteredMarkers, currentZoom]);
+        return clusterMarkers(filteredUsers, currentZoom);
+    }, [filteredUsers, currentZoom]);
 
     const ClusterModal = () => (
         <Modal
@@ -616,7 +527,7 @@ export default function HomeScreen() {
                                             onPress={() => {
 
                                                 setSelectedCluster(
-                                                    item.members
+                                                    item.members as UserStatus[]
                                                 );
 
                                                 setClusterVisible(true);
@@ -873,9 +784,7 @@ export default function HomeScreen() {
                     initialLiveStatus={liveFilterStatus}
                     initialRadius={filterRadius}
                     onApply={(categories, liveStatus, radius) => {
-                        setVisibleCategories(categories);
-                        setLiveFilterStatus(liveStatus);
-                        setFilterRadius(radius);
+                        setFilters(categories, liveStatus, radius);
                         setIsFilterModalVisible(false);
                     }} />
             </View>

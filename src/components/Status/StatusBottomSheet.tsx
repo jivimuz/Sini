@@ -24,7 +24,9 @@ import { useStatusStore } from "@/components/Status/stores/status.store";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useLang } from "@/stores/lang.store";
 import locales from "./locales";
-import { StatusData } from "./types/status.type";
+import { useUserStore } from "@/stores/user.store";
+import { useLocationStore } from "@/stores/location.store";
+import { useProfileModalStore } from "@/stores/profile.modal.store";
 
 // Helper untuk menghitung waktu yang telah berlalu.
 // Fungsi ini berasumsi bahwa objek locale `t` memiliki struktur seperti:
@@ -51,13 +53,30 @@ const formatTimeAgo = (dateString: string, t: any) => {
     return `${days} ${timeUnits.day} ${pastText}`;
 };
 
+// Helper function to calculate distance
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return "";
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const d = R * c; // in metres
+    if (d < 1000) {
+        return `${Math.round(d)} m`;
+    }
+    return `${(d / 1000).toFixed(1)} km`;
+};
+
 export default function StatusBottomSheet() {
     const sheetRef =
         useRef<BottomSheet>(null);
-    const [isLiked, setIsLiked] = React.useState(false);
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [status, setStatus] = React.useState<StatusData | null>(null);
-
     const snapPoints =
         useMemo(
             () => ["95%"],
@@ -71,27 +90,17 @@ export default function StatusBottomSheet() {
         selectedStatusId,
         closeStatus,
     } = useStatusStore();
+    const { toggleLike } = useUserStore();
+    const { latitude: userLatitude, longitude: userLongitude } = useLocationStore();
+    const { openProfile } = useProfileModalStore();
+
+    const status = useUserStore(state =>
+        selectedStatusId ? state.users.find(user => user.id === selectedStatusId) ?? null : null
+    );
 
     useEffect(() => {
         if (selectedStatusId) {
             sheetRef.current?.expand();
-            setIsLiked(false); // Reset like state saat membuka status baru
-
-            const twoHoursAgo = new Date();
-            twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-
-            setStatus({
-                id: selectedStatusId,
-                user_name: "Baron",
-                avatarUrl: "https://i.pravatar.cc/150?u=Baron",
-                statusImageUrl: require("@/../assets/images/dummy/images-2.jpeg"),
-                caption: "Ngopi ☕",
-                location_name: "Senayan City",
-                distance: "120m",
-                created_at: twoHoursAgo.toISOString(),
-            })
-            setIsLoading(false); // Set loading menjadi false setelah data status diatur
-
         } else {
             sheetRef.current?.close();
         }
@@ -99,7 +108,6 @@ export default function StatusBottomSheet() {
 
     const handleClose = () => {
         closeStatus();
-        setIsLiked(false); // Reset
     }
 
     return (
@@ -114,11 +122,9 @@ export default function StatusBottomSheet() {
             <BottomSheetView
                 className="flex-1"
             >
-                {!selectedStatusId ? null : (
+                {status ? (
                     <>
-                        {isLoading ? (
-                            <ActivityIndicator />
-                        ) : (
+                        {
                             // Langsung teruskan hasil `require` ke prop `source`
                             <ImageBackground source={status?.statusImageUrl} resizeMode="cover"
                                 className="flex-1 h-full w-full min-h-[768px] rounded-t-3xl overflow-hidden">
@@ -130,29 +136,31 @@ export default function StatusBottomSheet() {
                                     <View>
                                         {/* 2. Avatar, Nama, Lokasi */}
                                         <View className="flex-row items-center gap-1">
-                                            <Image
-                                                source={{ uri: status?.avatarUrl }} resizeMode="cover"
-                                                className="h-14 w-14 rounded-full border-2 border-yellow-400"
-                                            />
+                                            <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.id)}>
+                                                <Image
+                                                    source={{ uri: status?.avatarUrl }} resizeMode="cover"
+                                                    className="h-14 w-14 rounded-full border-2 border-yellow-400"
+                                                />
+                                            </TouchableOpacity>
                                             <View className="ml-4 flex-1 f">
                                                 <View className="flex-row justify-between items-baseline">
                                                     <View className="flex-row items-center">
-                                                        <Text className="text-lg font-bold text-white shadow-sm">
-                                                            {status && status.user_name && status.user_name.split(' ')[0]}
-                                                        </Text>
+                                                        <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.id)}>
+                                                            <Text className="text-lg font-bold text-white shadow-sm">
+                                                                {status.name.split(' ')[0]}
+                                                            </Text>
+                                                        </TouchableOpacity>
                                                         <Text className="ml-2 text-xs font-bold bg-black/30 px-2 py-1 rounded-full text-white">
-                                                            {status?.created_at && formatTimeAgo(status.created_at, t)}
+                                                            {formatTimeAgo(status.created_at, t)}
                                                         </Text>
                                                     </View>
                                                 </View>
                                                 <Text className="text-sm text-neutral-200 mt-1 shadow-sm">
-                                                    📍 {status && status?.distance} - {status && status?.location_name}
+                                                    📍 {getDistance(userLatitude!, userLongitude!, status.latitude, status.longitude)} - {status.location_name}
                                                 </Text>
                                             </View>
-                                            <View className="flex-row items-center gap-1">
-                                                <TouchableOpacity className="flex-row items-center space-x-2 bg-black/30 px-3 py-2 gap-1 rounded-full">
-                                                    <AntDesign name="share-alt" size={22} color="white" />
-                                                </TouchableOpacity>
+                                            <View className="flex-row items-end gap-1">
+
                                                 <TouchableOpacity onPress={handleClose} className="flex-row items-center space-x-2 bg-black/30 px-3 py-2 gap-1 rounded-full">
                                                     <AntDesign name="close" size={22} color="white" />
                                                 </TouchableOpacity>
@@ -163,18 +171,28 @@ export default function StatusBottomSheet() {
                                     <View>
                                         <View className="flex-row items-end justify-between mb-4">
                                             <Text className="text-base text-white shadow-sm flex-1 mr-4">
-                                                {status && status?.caption}
+                                                {status.caption}
                                             </Text>
-                                            <TouchableOpacity onPress={() => setIsLiked(!isLiked)} className="flex-row items-center space-x-2 bg-black/30 px-3 py-2 gap-1 rounded-full">
-                                                <Ionicons name={isLiked ? "heart" : "heart-outline"} size={25} color="#E5E7EB" />
-                                            </TouchableOpacity>
+                                            <View className="items-center gap-2">
+                                                <TouchableOpacity onPress={() => status && toggleLike(status.id)} className="items-center justify-center bg-black/30 h-12 w-12 rounded-full">
+                                                    <Ionicons name={status.is_liked ? "heart" : "heart-outline"} size={25} color={status.is_liked ? '#ef4444' : '#E5E7EB'} />
+                                                    <Text style={{ fontSize: 9 }} className="text-white font-semibold shadow-sm">
+                                                        {status.like_count}
+                                                    </Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity className="items-center space-x-2 bg-black/30 px-3 py-2 gap-1 rounded-full">
+                                                    <AntDesign name="share-alt" size={22} color="white" style={{ marginVertical: 2 }} />
+
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
                                         <View className="flex-row items-center space-x-3 border-t border-neutral-200/30 pt-4 gap-3" >
-                                            <View className="flex-1 flex-row items-center bg-white/20 rounded-full px-4 py-2">
+                                            <View className="flex-1 flex-row items-center bg-white/40 rounded-full px-4 py-2">
                                                 <TextInput
                                                     placeholder={t.chat}
-                                                    placeholderTextColor="#E5E7EB" // Warna placeholder abu-abu terang
-                                                    className="flex-1 text-white h-11"
+                                                    placeholderTextColor="#FAFAFAFA" // Warna placeholder abu-abu terang
+                                                    className="flex-1 text-black h-11"
                                                 />
                                                 <TouchableOpacity className="bg-softprimary h-11 w-11 rounded-full items-center justify-center">
                                                     <AntDesign name="send" size={18} color="black" />
@@ -184,9 +202,9 @@ export default function StatusBottomSheet() {
                                     </View>
                                 </View>
                             </ImageBackground>
-                        )}
+                        }
                     </>
-                )}
+                ) : null}
             </BottomSheetView>
         </BottomSheet>
     );

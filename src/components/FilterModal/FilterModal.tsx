@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useLang } from "@/stores/lang.store";
-import locales from "@/app/home/locales";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -10,7 +9,8 @@ import {
     CATEGORIES,
     CategoryKey,
     LiveFilterStatus,
-} from "../constants/categories";
+} from "../../constants/categories";
+import locales from "./locales";
 
 interface FilterModalProps {
     isVisible: boolean;
@@ -35,7 +35,7 @@ export const FilterModal = ({
 }: FilterModalProps) => {
     const sheetRef = useRef<BottomSheet>(null);
     const { lang } = useLang();
-    const t = locales[lang].homeScreen.filterModal;
+    const t = locales[lang].filterModal;
 
     const snapPoints = useMemo(() => ["80%"], []);
 
@@ -316,6 +316,7 @@ export const FilterModal = ({
                         flexDirection: "row",
                         marginTop: 30,
                         gap: 12,
+                        marginBottom: 100,
                     }}
                 >
                     <TouchableOpacity
