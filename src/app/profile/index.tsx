@@ -68,8 +68,8 @@ const ProfileScreen = () => {
     );
 
     return (
-        <SafeAreaView style={{ flex: 1 }} className="g-gray-100" edges={["top", "left", "right"]}>
-            <View className="flex-1 bg-gray-100">
+        <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
+            <View className="flex-1 bg-gray-50">
                 <ScrollView
                     contentContainerStyle={{ paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}

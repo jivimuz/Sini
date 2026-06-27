@@ -96,8 +96,8 @@ export default function ChatRoomScreen() {
         return (
             <View
                 className={`mb-4 ${item.sender === "me"
-                        ? "items-end"
-                        : "items-start"
+                    ? "items-end"
+                    : "items-start"
                     }`}
             >
                 <View

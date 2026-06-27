@@ -6,7 +6,12 @@
     "orientation": "portrait",
     "icon": "./assets/images/Sini-brand.png",
     "scheme": "sini",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/Sini-splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "icon": "./assets/images/Sini-brand.png",
       "supportsTablet": true,
@@ -31,16 +36,7 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/Sini-icon.png",
-            "imageWidth": 76
-          }
-        }
-      ],
+      "expo-splash-screen",
       "expo-secure-store",
       "@maplibre/maplibre-react-native",
     ],
