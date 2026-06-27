@@ -36,7 +36,7 @@ import { FilterModal } from "@/components/FilterModal/FilterModal";
 import { useLocationStore } from "@/stores/location.store";
 import { useUserStore } from "@/stores/user.store";
 import { UserStatus } from "@/types/userStatus.type";
-import { useFilterStore } from "./filter.store";
+import { useFilterStore } from "./stores/filter.store";
 
 
 

@@ -10,7 +10,7 @@ import { useStatusStore } from '@/components/Status/stores/status.store';
 import { useUserStore } from '@/stores/user.store';
 import { UserStatus } from '@/types/userStatus.type';
 import { useLocationStore } from '@/stores/location.store';
-import { useFilterStore } from '../home/filter.store';
+import { useFilterStore } from '../home/stores/filter.store';
 
 // Helper function to calculate distance
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {

@@ -29,9 +29,14 @@ export default function UserProfileModal() {
     }, [selectedUserId]);
 
     const content = user ? (
-        <BottomSheetView className="flex-1 bg-[#FFFDF5] px-6 pt-5  pb-20">
+        <BottomSheetView className="flex-1 bg-gray-50 px-6 pt-5  pb-20">
 
             {/* Avatar */}
+            <View className="flex-row justify-end">
+                <TouchableOpacity onPress={closeProfile}>
+                    <Ionicons name="close" size={24} color="#6B7280" />
+                </TouchableOpacity>
+            </View>
 
             <View className="items-center">
 

@@ -6,10 +6,10 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import locales from "./locales";
 import { useLang } from "@/stores/lang.store";
+import { router } from "expo-router";
 
 const chats = [
     {
@@ -40,8 +40,9 @@ export default function ChatScreen() {
     const t = locales[lang].ChatScreen.chatList;
 
     const handleChatPress = (id: string) => {
-        router.push(`/chat/screens/chatRoom/${id}` as any);
-    }
+        // Gunakan format string langsung + 'as any' untuk melewati pengecekan TS sementara
+        router.navigate(`/chat/screens/chatRoom/${id}` as any);
+    };
     return (
         <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
             <View className="flex-row justify-between items-center p-4 bg-gray-50 border-b border-gray-200">
@@ -56,30 +57,7 @@ export default function ChatScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* ACTIVE USERS */}
 
-            <View className="mt-6">
-                <Text className="px-5 font-semibold">
-                    Nearby Active
-                </Text>
-
-                <FlatList horizontal showsHorizontalScrollIndicator={false} className="mt-4 pl-5" data={[1, 2, 3, 4, 5, 6]}
-                    renderItem={() => (
-                        <View className="mr-4 items-center">
-                            <View className="
-                                w-16
-                                h-16
-                                rounded-full
-                                bg-[#FFE98A]
-                                " />
-
-                            <Text className="mt-2 text-xs">
-                                Udin
-                            </Text>
-                        </View>
-                    )}
-                />
-            </View>
 
             {/* CHAT LIST */}
 
@@ -87,9 +65,8 @@ export default function ChatScreen() {
                 renderItem={({ item }) => (
                     <TouchableOpacity onPress={() => handleChatPress(item.id)} className="
                         mx-5
-                        mb-3
-                        p-4
-                        bg-white
+                        mb-2
+                        p-2
                         rounded-3xl
                         flex-row
                         items-center
