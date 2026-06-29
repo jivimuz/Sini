@@ -5,7 +5,6 @@ import { useLang } from "@/stores/lang.store";
 import {
     View,
     Text,
-    Alert,
     Modal,
     Linking,
     TouchableOpacity,
@@ -38,6 +37,7 @@ import { useUserStore } from "@/stores/user.store";
 import { UserStatus } from "@/types/userStatus.type";
 import { useFilterStore } from "./stores/filter.store";
 import { useShowNavbar } from "@/stores/showNavBar.store";
+import Toast from "@/utils/Toast";
 
 
 
@@ -92,13 +92,13 @@ export default function HomeScreen() {
         const past = new Date(dateString);
         const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
-        if (diffInSeconds < 60) return `Baru saja`;
+        if (diffInSeconds < 60) return t.justNow;
         const minutes = Math.floor(diffInSeconds / 60);
-        if (minutes < 60) return `${minutes}m lalu`;
+        if (minutes < 60) return `${minutes}${t.minute} ${t.past}`;
         const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}j lalu`;
+        if (hours < 24) return `${hours}${t.hour} ${t.past}`;
         const days = Math.floor(hours / 24);
-        return `${days}h lalu`;
+        return `${days}${t.day} ${t.past}`;
     };
 
     const { lang } = useLang();
@@ -276,7 +276,7 @@ export default function HomeScreen() {
                 await Location.requestForegroundPermissionsAsync();
 
             if (status !== "granted") {
-                Alert.alert(
+                Toast.error(
                     t.alerts.locationDeniedTitle,
                     t.alerts.locationDeniedMessage
                 );
@@ -312,17 +312,6 @@ export default function HomeScreen() {
         }
     };
 
-    // const toggleCategory = (category: CategoryKey) => {
-    //     setVisibleCategories(prev => {
-    //         const newCategories = prev.includes(category)
-    //             ? prev.filter(c => c !== category)
-    //             : [...prev, category];
-
-    //         // Pastikan minimal satu kategori selalu terpilih
-    //         return newCategories.length > 0 ? newCategories : prev;
-    //     });
-    // };
-
     const handleMapMove = (event: any) => {
         setIsMapCentered(false);
     }
@@ -332,7 +321,7 @@ export default function HomeScreen() {
             userLatitude === null ||
             userLongitude === null
         ) {
-            Alert.alert(
+            Toast.error(
                 t.alerts.locationUnavailableTitle,
                 t.alerts.locationUnavailableMessage
             );

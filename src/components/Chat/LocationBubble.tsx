@@ -4,7 +4,6 @@ import {
     Text,
     TouchableOpacity,
     Linking, // 1. Tambahkan import Linking untuk membuka aplikasi eksternal
-    Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -12,6 +11,7 @@ import {
     Camera,
     Marker,
 } from "@maplibre/maplibre-react-native";
+import Toast from "@/utils/Toast";
 
 const primaryMapStyle = require('@/../assets/map/primary-map.json');
 
@@ -52,7 +52,7 @@ export default function LocationBubble({
                 await Linking.openURL(universalUrl);
             }
         } catch (error) {
-            Alert.alert("Gagal Membuka Peta", "Tidak dapat membuka aplikasi navigasi di perangkat Anda.");
+            Toast.error("Gagal Membuka Peta", "Tidak dapat membuka aplikasi navigasi di perangkat Anda.");
         }
 
         // Panggil juga fungsi onPress eksternal jika dilewatkan dari props parent

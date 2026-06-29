@@ -17,7 +17,7 @@ import TypingIndicator from "@/components/Chat/TypingIndicator";
 import ChatInput from "@/components/Chat/ChatInput";
 import AttachmentSheet from "@/components/Chat/AttachmentSheet";
 
-import { ChatMessage } from "../../types/chat";
+import { ChatMessage } from "../../types/chat.type";
 import { useChatStore } from "../../stores/chat.store";
 import { useShowNavbar } from "@/stores/showNavBar.store";
 import { useUserStore } from "@/stores/user.store";

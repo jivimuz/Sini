@@ -1,20 +1,7 @@
 import { create } from "zustand";
-import { ChatMessage } from "../types/chat";
+import { ChatMessage, ChatStore } from "../types/chat.type";
 
-interface ChatStore {
-    messages: ChatMessage[];
-    typing: boolean;
 
-    addMessage: (message: ChatMessage) => void;
-
-    sendMessage: (text: string) => void;
-
-    sendLocation: () => void;
-
-    markSeen: (id: string) => void;
-
-    setTyping: (typing: boolean) => void;
-}
 
 export const useChatStore = create<ChatStore>((set) => ({
     typing: false,

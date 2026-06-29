@@ -9,7 +9,19 @@ module.exports = {
         primary: '#FFC700', // Kuning
         softprimary: '#FFF3D6', // Kuning Muda
         accent: '#FF9800', // Oranye
-      }
+      },
+      fontFamily: {
+        sans: ["Outfit-Regular"],
+        medium: ["Outfit-Medium"],
+        semibold: ["Outfit-SemiBold"],
+        bold: ["Outfit-Bold"],
+        extrabold: ["Outfit-ExtraBold"],
+
+        body: ["PlusJakartaSans-Regular"],
+        "body-medium": ["PlusJakartaSans-Medium"],
+        "body-semibold": ["PlusJakartaSans-SemiBold"],
+        "body-bold": ["PlusJakartaSans-Bold"],
+      },
     },
   },
   plugins: [],

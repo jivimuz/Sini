@@ -11,6 +11,7 @@ interface UserState {
     fetchUsers: (userLat: number, userLon: number) => void;
     getUserById: (id: string) => UserStatus | undefined;
     toggleLike: (id: string) => void;
+    addStatus: (status: UserStatus) => void;
 }
 
 // Helper untuk menghasilkan titik acak dalam radius tertentu
@@ -39,7 +40,7 @@ const dummyStatusData = [
     { caption: "Macet banget!", image: require('@/../assets/images/dummy/images-3.jpeg'), location: "Gatot Subroto" },
     { caption: "Belajar buat ujian besok.", image: require('@/../assets/images/dummy/images-4.jpeg'), location: "Perpustakaan" },
     { caption: "Nonton konser, seru!!", image: require('@/../assets/images/dummy/images-1.jpeg'), location: "ICE BSD" },
-    { caption: "Akhirnya weekend!", image: require('@/../assets/images/dummy/images-2.jpeg'), location: "Pantai Ancol" },
+    { caption: "Akhirnya weekend! Mau jalan-jalan! Coba deh! Akhirnya weekend! Mau jalan-jalan! Coba deh!", image: require('@/../assets/images/dummy/images-2.jpeg'), location: "Pantai Ancol" },
 ];
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -50,6 +51,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
         const dummyData: UserStatus[] = [];
         const names = ["Joko", "Budi", "Siti", "Ani", "Eka", "Dwi", "Tri", "Catur", "Panca", "Satya"];
+        const sellingItems = ["Laptop", "Sepeda", "Kamera", "Baju", "Jam Tangan", "Tas", "Headphone", "Speaker", "Smartphone", "Kursi"];
         const categories = ALL_CATEGORIES;
 
         for (let i = 0; i < 10; i++) {
@@ -64,13 +66,16 @@ export const useUserStore = create<UserState>((set, get) => ({
                 ...randomLocation,
                 name: names[i % names.length],
                 avatarUrl: `https://i.pravatar.cc/150?u=user${i}`,
-                category: randomCategory,
-                color: CATEGORIES[randomCategory].color,
-                is_live: i % 2 === 0,
+                category: randomCategory as CategoryKey,
+                color: CATEGORIES.find(c => c.key === randomCategory)?.color || '#000000',
                 created_at: randomPastDate.toISOString(),
-                is_liked: false, // Tambahkan flag is_liked
-                like_count: Math.floor(Math.random() * 100), // Tambahkan jumlah like acak
-                // Data spesifik status
+                is_live: i % 2 === 0,
+                is_liked: false,
+                is_selling: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? true : false,
+                price: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? Math.floor(Math.random() * 100000000) : null,
+                currency_symbol: 'Rp',
+                like_count: Math.floor(Math.random() * 100),
+                title: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? sellingItems[i % sellingItems.length] : null,
                 caption: statusInfo.caption, statusImageUrl: statusInfo.image, location_name: statusInfo.location,
             });
         }
@@ -90,5 +95,10 @@ export const useUserStore = create<UserState>((set, get) => ({
                 return user;
             })
         }))
-    }
+    },
+    addStatus: (status: UserStatus) => {
+        set((state) => ({
+            users: [status, ...state.users]
+        }));
+    },
 }));

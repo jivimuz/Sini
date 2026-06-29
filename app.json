@@ -33,11 +33,17 @@
       "expo-router",
       "expo-splash-screen",
       "expo-secure-store",
-      "@maplibre/maplibre-react-native",
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0b7e3b8a-8279-4ab8-ad20-fb51998382a4"
+      }
     }
   }
 }

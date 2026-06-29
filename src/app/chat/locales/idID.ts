@@ -1,5 +1,3 @@
-import ChatScreen from "..";
-
 export default {
     ChatScreen: {
         chatList: {

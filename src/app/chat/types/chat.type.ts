@@ -15,3 +15,18 @@ export interface ChatMessage {
         distance?: string;
     };
 }
+
+export interface ChatStore {
+    messages: ChatMessage[];
+    typing: boolean;
+
+    addMessage: (message: ChatMessage) => void;
+
+    sendMessage: (text: string) => void;
+
+    sendLocation: () => void;
+
+    markSeen: (id: string) => void;
+
+    setTyping: (typing: boolean) => void;
+}

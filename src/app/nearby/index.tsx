@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, RefreshControl, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLang } from '@/stores/lang.store';
 import locales from './locales';
 import { FilterModal } from '@/components/FilterModal/FilterModal';
-import { ALL_CATEGORIES, CategoryKey, LiveFilterStatus } from '@/constants/categories';
+import { ALL_CATEGORIES, CATEGORIES, CategoryKey, LiveFilterStatus } from '@/constants/categories';
 import { useStatusStore } from '@/components/Status/stores/status.store';
 import { useUserStore } from '@/stores/user.store';
 import { UserStatus } from '@/types/userStatus.type';
@@ -126,40 +126,55 @@ const NearbyScreen = () => {
 
     const renderItem = ({ item }: { item: UserStatus }) => (
         <TouchableOpacity
-            className="bg-white rounded-2xl p-4 mb-4 shadow-sm"
-            activeOpacity={0.8}
+            activeOpacity={0.9}
+            className="flex-1 max-w-[50%] p-2"
             onPress={() => openStatus(item.id)}
         >
-            <View className="flex-row justify-center items-center">
-                <Image
-                    source={item.statusImageUrl}
-                    className="w-16 h-20 rounded-lg mr-4"
-                />
-                <View className="flex-1">
-                    <Text className="text-base font-bold text-neutral-800">{item.name}</Text>
-                    <Text className="text-sm text-neutral-500 mt-1">
-                        {getDistance(userLatitude!, userLongitude!, item.latitude, item.longitude)}
-                        <Text className="text-neutral-400"> · </Text>
-                        {formatTimeAgo(item.created_at || new Date().toISOString(), t)}
-                    </Text>
-                    <Text className="text-sm text-neutral-700 mt-2" numberOfLines={2}>
-                        {item.caption}
-                    </Text>
-                </View>
+            <View className="bg-white rounded-lg shadow-sm overflow-hidden">
+                {/* Image Section */}
+                <ImageBackground source={item.statusImageUrl} resizeMode="cover" className="h-32 w-full">
+                    <View className="flex-1 justify-end p-2">
+                        {/* Price Tag */}
+                        {item.is_selling && item.price !== null && (
+                            <View className="bg-black/60 px-2 py-1 rounded-md self-start">
+                                <Text className="text-white text-xs font-bold">
+                                    {item.currency_symbol === 'Rp'
+                                        ? `${item.currency_symbol} ${item.price.toLocaleString('id-ID')}`
+                                        : `${item.currency_symbol} ${item.price.toLocaleString('en-US')}`
+                                    }
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </ImageBackground>
 
-                <TouchableOpacity
-                    className="p-2 -mr-2 text-center items-center" // Add padding for easier tap & negative margin to align
-                    onPress={(e) => {
-                        e.stopPropagation();
-                        toggleLike(item.id);
-                    }}
-                    activeOpacity={0.7}
-                >
-                    <Ionicons name={item.is_liked ? "heart" : "heart-outline"} size={25} color={item.is_liked ? '#ef4444' : "#9CA3AF"} />
-                    <Text className="text-black text-xs font-semibold mt-1 shadow-sm">
-                        {item.like_count}
+                {/* Info Section */}
+                <View className="p-2">
+                    <Text className="text-sm font-semibold text-neutral-800" numberOfLines={2}>
+                        {item.title || item.caption}
                     </Text>
-                </TouchableOpacity>
+
+                    {/* User and Distance */}
+                    <View className="flex-row items-center justify-between mt-2">
+                        <View className="flex-row items-center flex-1 mr-2">
+                            <Image source={{ uri: item.avatarUrl }} className="w-5 h-5 rounded-full" />
+                            <Text className="text-xs text-neutral-500 ml-1.5 flex-1" numberOfLines={1}>
+                                {item.name.split(' ')[0]} · {getDistance(userLatitude!, userLongitude!, item.latitude, item.longitude)}
+                            </Text>
+                        </View>
+                        {/* Like Button */}
+                        <TouchableOpacity
+                            className="flex-row items-center"
+                            onPress={(e) => { e.stopPropagation(); toggleLike(item.id); }}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name={item.is_liked ? "heart" : "heart-outline"} size={16} color={item.is_liked ? '#ef4444' : "#9CA3AF"} />
+                            <Text className="text-neutral-600 text-xs font-semibold ml-1">
+                                {item.like_count}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -180,10 +195,11 @@ const NearbyScreen = () => {
             </View>
 
             <FlatList
+                numColumns={2}
                 data={filteredUsers}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{ padding: 16 }}
+                contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9CA3AF" />
@@ -194,7 +210,7 @@ const NearbyScreen = () => {
                     </View>
                 }
             />
-
+            <View className="h-20" />
             <FilterModal
                 isVisible={isFilterModalVisible}
                 onClose={() => setIsFilterModalVisible(false)}

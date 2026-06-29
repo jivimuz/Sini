@@ -27,6 +27,7 @@ import locales from "./locales";
 import { useUserStore } from "@/stores/user.store";
 import { useLocationStore } from "@/stores/location.store";
 import { useProfileModalStore } from "@/stores/profileModal.store";
+import { CATEGORIES } from "@/constants/categories";
 
 // Helper untuk menghitung waktu yang telah berlalu.
 // Fungsi ini berasumsi bahwa objek locale `t` memiliki struktur seperti:
@@ -120,15 +121,17 @@ export default function StatusBottomSheet() {
             handleIndicatorStyle={{ backgroundColor: '#E5E7EB' }} // a subtle handle
         >
             <BottomSheetView
-                className="flex-1"
+                className="flex-1 h-full bg-black rounded-t-3xl"
             >
                 {status ? (
                     <>
                         {
                             // Langsung teruskan hasil `require` ke prop `source`
-                            <ImageBackground source={status?.statusImageUrl} resizeMode="cover"
-                                className="flex-1 h-full w-full min-h-[768px] rounded-t-3xl overflow-hidden">
-                                {/* 1. Foto Status Gede */}
+                            <ImageBackground
+                                source={status?.statusImageUrl as ImageSourcePropType}
+                                resizeMode="contain"
+                                style={{ flex: 1 }}
+                                className="flex-1  rounded-t-3xl overflow-hidden" >
 
                                 {/* Wrapper untuk mengatur layout konten di atas background */}
                                 <View className="flex-1 justify-between p-5">
@@ -150,7 +153,7 @@ export default function StatusBottomSheet() {
                                                                 {status.name.split(' ')[0]}
                                                             </Text>
                                                         </TouchableOpacity>
-                                                        <Text className="ml-2 text-xs font-bold bg-black/30 px-2 py-1 rounded-full text-white">
+                                                        <Text className="ml-2 text-xs font-bold bg-white/30 px-2 py-1 rounded-full text-white">
                                                             {formatTimeAgo(status.created_at, t)}
                                                         </Text>
                                                     </View>
@@ -168,11 +171,43 @@ export default function StatusBottomSheet() {
                                         </View>
                                     </View>
                                     {/* -- KONTEN BAWAH -- */}
+
                                     <View>
+
                                         <View className="flex-row items-end justify-between mb-4">
-                                            <Text className="text-base text-white shadow-sm flex-1 mr-4">
-                                                {status.caption}
-                                            </Text>
+
+                                            <View className="flex-1 flex-col items-start mr-4 gap-y-1.5">
+
+                                                {/* HARGA: Sekarang berada di atas caption dengan kontainer pas */}
+                                                <View className="flex-row items-center gap-2 mb-1">
+                                                    <View className="px-3 py-1 rounded-full" style={{ backgroundColor: status.color }}>
+                                                        <Text className="text-white text-xs font-semibold shadow-sm">
+                                                            {CATEGORIES.find(c => c.key === status.category)?.name}
+                                                        </Text>
+                                                    </View>
+                                                    {status.is_selling && status.price !== null && (
+                                                        <View className="bg-black/30 px-3 py-1 rounded-full">
+                                                            <Text className="text-white text-xs font-semibold shadow-sm">
+                                                                {status.currency_symbol === 'Rp'
+                                                                    ? `${status.currency_symbol} ${status.price.toLocaleString('id-ID')}`
+                                                                    : `${status.currency_symbol} ${status.price.toLocaleString('en-US')}`
+                                                                }
+                                                            </Text>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                                {status.is_selling && status.title !== null && (
+                                                    <Text className="text-base font-bold text-white shadow-sm w-full leading-5">
+                                                        {status.title}
+                                                    </Text>
+                                                )}
+
+                                                {/* CAPTION */}
+                                                <Text className="text-base text-white shadow-sm w-full leading-5" >
+                                                    {status.caption}
+                                                </Text>
+                                            </View>
+
                                             <View className="items-center gap-2">
                                                 <TouchableOpacity onPress={() => status && toggleLike(status.id)} className="items-center justify-center bg-black/30 h-12 w-12 rounded-full">
                                                     <Ionicons name={status.is_liked ? "heart" : "heart-outline"} size={25} color={status.is_liked ? '#ef4444' : '#E5E7EB'} />
@@ -188,11 +223,11 @@ export default function StatusBottomSheet() {
                                             </View>
                                         </View>
                                         <View className="flex-row items-center space-x-3 border-t border-neutral-200/30 pt-4 gap-3" >
-                                            <View className="flex-1 flex-row items-center bg-white/40 rounded-full px-4 py-2">
+                                            <View className="flex-1 flex-row items-center bg-black/40 rounded-full px-4 py-2">
                                                 <TextInput
                                                     placeholder={t.chat}
                                                     placeholderTextColor="#FAFAFAFA" // Warna placeholder abu-abu terang
-                                                    className="flex-1 text-black h-11"
+                                                    className="flex-1 text-white h-11"
                                                 />
                                                 <TouchableOpacity className="bg-softprimary h-11 w-11 rounded-full items-center justify-center">
                                                     <AntDesign name="send" size={18} color="black" />

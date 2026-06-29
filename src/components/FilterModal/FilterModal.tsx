@@ -264,10 +264,11 @@ export const FilterModal = ({
                         flexWrap: "wrap",
                         gap: 10,
                         alignItems: "center",
+                        justifyContent: "flex-start",
                     }}
                 >
                     {ALL_CATEGORIES.map(key => {
-                        const category = CATEGORIES[key];
+                        const category = CATEGORIES.find(c => c.key === key);
                         const selected =
                             tempCategories.includes(key);
 
@@ -289,7 +290,7 @@ export const FilterModal = ({
                                 }}
                             >
                                 <Ionicons
-                                    name={category.icon}
+                                    name={category?.icon}
                                     size={18}
                                     color="#111"
                                 />
@@ -300,7 +301,7 @@ export const FilterModal = ({
                                         fontWeight: "600",
                                     }}
                                 >
-                                    {category.name}
+                                    {category?.name}
                                 </Text>
                             </TouchableOpacity>
                         );
@@ -313,16 +314,20 @@ export const FilterModal = ({
 
                 <View
                     style={{
+                        display: "flex",
                         flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                         marginTop: 30,
                         gap: 12,
                         marginBottom: 100,
                     }}
                 >
+                    {/* Tombol Reset (Mengambil 1 bagian) */}
                     <TouchableOpacity
                         onPress={handleReset}
                         style={{
-                            flex: 1,
+                            flex: 2, // 👈 Cukup pakai flex saja, hapus width
                             height: 54,
                             borderRadius: 999,
                             borderWidth: 1,
@@ -331,19 +336,16 @@ export const FilterModal = ({
                             alignItems: "center",
                         }}
                     >
-                        <Text
-                            style={{
-                                fontWeight: "700",
-                            }}
-                        >
-                            {t.reset}
+                        <Text style={{ fontWeight: "700" }}>
+                            <Ionicons name="reload" size={18} color="#555" />
                         </Text>
                     </TouchableOpacity>
 
+                    {/* Tombol Terapkan (Mengambil 4 bagian / Lebih Luas) */}
                     <TouchableOpacity
                         onPress={handleApply}
                         style={{
-                            flex: 1,
+                            flex: 10,
                             height: 54,
                             borderRadius: 999,
                             backgroundColor: "#FACC15",
@@ -351,15 +353,12 @@ export const FilterModal = ({
                             alignItems: "center",
                         }}
                     >
-                        <Text
-                            style={{
-                                fontWeight: "700",
-                            }}
-                        >
+                        <Text style={{ fontWeight: "700" }}>
                             {t.apply}
                         </Text>
                     </TouchableOpacity>
                 </View>
+
             </BottomSheetView>
         </BottomSheet>
     );

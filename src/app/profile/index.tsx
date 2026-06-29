@@ -1,12 +1,14 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl, Alert } from 'react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Lang, useLang } from '@/stores/lang.store'
 import locales from './locales'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '@/constants/theme'
-import { useBarColor } from '@/stores/barColor.store'
 import { useShowNavbar } from '@/stores/showNavBar.store'
+import * as ImagePicker from 'expo-image-picker';
+import Toast from '@/utils/Toast'
+import { useAuth } from '@/stores/auth.store'
 
 // --- Komponen untuk item menu ---
 type MenuItemProps = {
@@ -46,6 +48,8 @@ const ProfileScreen = () => {
     const { lang, setLang } = useLang();
     const t = locales[lang].profileScreen;
     const [refreshing, setRefreshing] = useState(false);
+    const [profileImage, setProfileImage] = useState("https://i.pravatar.cc/200"); // State untuk URL gambar profil
+    const { logout } = useAuth();
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -60,6 +64,25 @@ const ProfileScreen = () => {
     useEffect(() => {
         setNavbar(true);
     }, []);
+
+    const handleChangeProfilePicture = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Toast.info('Izin Diperlukan', 'Anda perlu memberikan izin galeri untuk mengubah foto profil.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1], // Rasio aspek 1:1 untuk foto profil
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            setProfileImage(result.assets[0].uri);
+        }
+    };
 
     // --- Komponen untuk tombol pilihan bahasa ---
     const LanguageButton = ({ targetLang, label }: { targetLang: Lang, label: string }) => (
@@ -87,9 +110,7 @@ const ProfileScreen = () => {
                         <View className="relative">
 
                             <Image
-                                source={{
-                                    uri: "https://i.pravatar.cc/200",
-                                }}
+                                source={{ uri: profileImage }}
                                 className="
                                 w-28    
                                 h-28
@@ -100,6 +121,7 @@ const ProfileScreen = () => {
                             />
 
                             <TouchableOpacity
+                                onPress={handleChangeProfilePicture}
                                 className="
                                 absolute
                                 bottom-0
@@ -169,9 +191,10 @@ const ProfileScreen = () => {
                             </View>
 
                             {/* --- Tombol Logout --- */}
-                            <MenuItem icon="log-out-outline" label={t.logout} isLogout={true} />
+                            <MenuItem icon="log-out-outline" label={t.logout} isLogout={true} onPress={() => { logout() }} />
                         </View>
                     </SafeAreaView>
+                    <View className="h-20" />
                 </ScrollView>
             </View>
         </SafeAreaView>

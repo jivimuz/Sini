@@ -12,6 +12,11 @@ export default {
             route: "Rute",
             chat: "Chat",
         },
+        past: "lalu",
+        minute: "m",
+        hour: "j",
+        day: "h",
+        justNow: "Baru saja",
 
     }
 };

@@ -7,7 +7,7 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { ChatMessage } from "@/app/chat/types/chat";
+import { ChatMessage } from "@/app/chat/types/chat.type";
 
 
 interface Props {

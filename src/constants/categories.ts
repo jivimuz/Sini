@@ -1,18 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 
-export const CATEGORY_DATA = {
-    one: { color: '#3498db', icon: 'people-outline' as const },
-    two: { color: '#2ecc71', icon: 'home-outline' as const },
-    three: { color: '#e67e22', icon: 'briefcase-outline' as const },
-} as const;
 
-export const CATEGORIES = {
-    one: { name: "Event", ...CATEGORY_DATA.one },
-    two: { name: "Selling", ...CATEGORY_DATA.two },
-    three: { name: "Work", ...CATEGORY_DATA.three },
-};
+export const CATEGORIES = [
+    { key: 'chill', name: "Chill", color: '#E57373', icon: 'people-outline' as const },
+    { key: 'selling', name: "Selling", color: '#B19CD9', icon: 'home-outline' as const },
+    { key: 'work', name: "Work", color: '#F39C12', icon: 'briefcase-outline' as const },
+];
 
-export type CategoryKey = keyof typeof CATEGORY_DATA;
+export type CategoryKey = typeof CATEGORIES[number]['key'];
 export type LiveFilterStatus = 'all' | 'live' | 'regular';
 
-export const ALL_CATEGORIES = Object.keys(CATEGORY_DATA) as CategoryKey[];
+export const ALL_CATEGORIES = CATEGORIES.map(category => category.key);

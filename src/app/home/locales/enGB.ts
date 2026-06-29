@@ -13,6 +13,11 @@ export default {
             route: "Route",
             chat: "Chat",
         },
+        past: "ago",
+        minute: "m",
+        hour: "h",
+        day: "d",
+        justNow: "Just now",
 
     }
 };

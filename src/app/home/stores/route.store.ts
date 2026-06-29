@@ -1,22 +1,7 @@
 import { create } from "zustand";
+import { RouteState } from "../types/route";
 
-export interface RoutePoint {
-    latitude: number;
-    longitude: number;
-}
 
-interface RouteState {
-    isRouteMode: boolean;
-    destination: RoutePoint | null;
-    routeCoordinates: [number, number][];
-
-    startRoute: (
-        destination: RoutePoint,
-        coordinates: [number, number][]
-    ) => void;
-
-    exitRoute: () => void;
-}
 
 export const useRouteStore = create<RouteState>((set) => ({
     isRouteMode: false,

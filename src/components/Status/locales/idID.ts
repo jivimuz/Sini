@@ -1,7 +1,7 @@
 export default {
     statusBottomSheet: {
         like: "Suka",
-        chat: "Kirim pesanada",
+        chat: "Kirim pesan",
         share: "Bagikan",
         past: "lalu",
         minute: "menit",

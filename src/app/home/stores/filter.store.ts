@@ -1,17 +1,7 @@
 import { create } from 'zustand';
 import { ALL_CATEGORIES, CategoryKey, LiveFilterStatus } from '@/constants/categories';
+import { FilterState } from '../types/filter';
 
-interface FilterState {
-    visibleCategories: CategoryKey[];
-    liveFilterStatus: LiveFilterStatus;
-    filterRadius: number; // in meters
-    setFilters: (
-        categories: CategoryKey[],
-        liveStatus: LiveFilterStatus,
-        radius: number
-    ) => void;
-    resetFilters: () => void;
-}
 
 const INITIAL_RADIUS = 5000; // Default to 5km
 
