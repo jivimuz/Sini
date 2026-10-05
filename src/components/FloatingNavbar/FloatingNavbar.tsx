@@ -184,7 +184,11 @@ const FloatingNavbar = ({ activeTab, setActiveTab }: FloatingNavbarProps) => {
                         tab={tab}
                         isActive={isActive}
                         isCenter={isCenter}
-                        onPress={() => router.push(tab.path as any)} // 7. Navigasi langsung menggunakan URL
+                        onPress={() => {
+                            if (!isActive) {
+                                router.push(tab.path as any)
+                            }
+                        }} // 7. Navigasi langsung menggunakan URL
                     />
                 );
             })}

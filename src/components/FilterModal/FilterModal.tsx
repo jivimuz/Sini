@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import Slider from "@react-native-community/slider";
 import { useLang } from "@/stores/lang.store";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -24,6 +25,12 @@ interface FilterModalProps {
         radius: number
     ) => void;
 }
+
+const MIN_RADIUS_METERS = 1000; // 1 km
+const MAX_RADIUS_METERS = 50000; // 50 km
+const RADIUS_STEP_METERS = 1000;
+
+const formatRadiusLabel = (meters: number) => `${(meters / 1000).toFixed(0)} km`;
 
 export const FilterModal = ({
     isVisible,
@@ -52,13 +59,6 @@ export const FilterModal = ({
         { key: "live", label: t.status.live },
         { key: "regular", label: t.status.regular },
     ] as const;
-
-    const radiusOptions = [
-        { value: 500, label: "500m" },
-        { value: 1000, label: "1km" },
-        { value: 2000, label: "2km" },
-        { value: 5000, label: "5km" },
-    ];
 
     useEffect(() => {
         if (isVisible) {
@@ -138,58 +138,41 @@ export const FilterModal = ({
                 </View>
 
                 {/* Radius Filter */}
-                <Text
-                    style={{
-                        fontWeight: "600",
-                        marginBottom: 12,
-                        marginTop: 24,
-                    }}
-                >
-                    {t.radius}
-                </Text>
-
                 <View
                     style={{
                         flexDirection: "row",
-                        backgroundColor: "#E5E7EB",
-                        borderRadius: 999,
-                        padding: 4,
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                        marginBottom: 4,
+                        marginTop: 24,
+                    }}
+                >
+                    <Text style={{ fontWeight: "600" }}>{t.radius}</Text>
+                    <Text style={{ fontWeight: "700", color: "#D97706" }}>
+                        {formatRadiusLabel(tempRadius)}
+                    </Text>
+                </View>
+
+                <Slider
+                    style={{ width: "100%", height: 40, marginBottom: 8 }}
+                    minimumValue={MIN_RADIUS_METERS}
+                    maximumValue={MAX_RADIUS_METERS}
+                    step={RADIUS_STEP_METERS}
+                    value={tempRadius}
+                    onValueChange={setTempRadius}
+                    minimumTrackTintColor="#FACC15"
+                    maximumTrackTintColor="#E5E7EB"
+                    thumbTintColor="#D97706"
+                />
+                <View
+                    style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
                         marginBottom: 24,
                     }}
                 >
-                    {radiusOptions.map(option => {
-                        const selected =
-                            tempRadius === option.value;
-
-                        return (
-                            <TouchableOpacity
-                                key={option.value}
-                                onPress={() =>
-                                    setTempRadius(option.value)
-                                }
-                                style={{
-                                    flex: 1,
-                                    paddingVertical: 10,
-                                    borderRadius: 999,
-                                    backgroundColor: selected
-                                        ? "white"
-                                        : "transparent",
-                                    alignItems: "center",
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        fontWeight: "600",
-                                        color: selected
-                                            ? "#111"
-                                            : "#777",
-                                    }}
-                                >
-                                    {option.label}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
+                    <Text style={{ fontSize: 12, color: "#9CA3AF" }}>{formatRadiusLabel(MIN_RADIUS_METERS)}</Text>
+                    <Text style={{ fontSize: 12, color: "#9CA3AF" }}>{formatRadiusLabel(MAX_RADIUS_METERS)}</Text>
                 </View>
 
                 {/* Live Filter */}

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, TextInput, Platform, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, Image, TextInput, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useShowNavbar } from '@/stores/showNavBar.store';
@@ -9,6 +9,10 @@ import { AppleButton } from '@/components/Auth/AppleButton/AppleButton';
 import { useLang } from '@/stores/lang.store';
 import locales from './locales';
 import { LanguageSwitch } from '@/components/Lang/SwitchLangButton';
+import { useAuth } from '../../stores/auth.store';
+import { register as registerRequest } from './api/register';
+import { tokenStorage } from '../api/client';
+import { ApiError } from '../api/types';
 
 export default function RegisterScreen() {
     const { setNavbar } = useShowNavbar();
@@ -22,11 +26,68 @@ export default function RegisterScreen() {
         setNavbar(false);
     }, []);
 
-    const handleRegister = () => {
-        // Logika untuk mendaftarkan pengguna
-        console.log("Mendaftarkan pengguna...");
-        // Setelah berhasil, mungkin navigasi ke halaman utama
-        // router.replace('/');
+    const { login: setLoggedIn } = useAuth();
+    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [retryAfter, setRetryAfter] = useState(0);
+
+    useEffect(() => {
+        if (retryAfter <= 0) return;
+
+        const timer = setInterval(() => {
+            setRetryAfter((current) => (current <= 1 ? 0 : current - 1));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [retryAfter > 0]);
+
+    const handleRegister = async () => {
+        if (retryAfter > 0) return;
+
+        setErrorMessage('');
+
+        if (!name.trim() || !username.trim() || !email.trim() || !password) {
+            setErrorMessage('Semua kolom wajib diisi.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setErrorMessage('Konfirmasi password tidak sama.');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const session = await registerRequest({
+                name: name.trim(),
+                username: username.trim(),
+                email: email.trim(),
+                password,
+                password_confirmation: confirmPassword,
+            });
+            await tokenStorage.setSession(session);
+            setLoggedIn();
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 422) {
+                const errors = (error.details as { errors?: Record<string, string[]> } | undefined)?.errors;
+                const firstError = errors ? Object.values(errors)[0]?.[0] : undefined;
+                setErrorMessage(firstError ?? 'Periksa kembali data pendaftaran Anda.');
+            } else if (error instanceof ApiError && error.status === 429) {
+                setRetryAfter(error.retryAfter ?? 60);
+            } else if (error instanceof ApiError && error.status >= 500) {
+                setErrorMessage('Server sedang bermasalah. Coba lagi nanti.');
+            } else {
+                setErrorMessage('Pendaftaran gagal. Periksa koneksi dan coba lagi.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -66,19 +127,25 @@ export default function RegisterScreen() {
                     {/* Input Nama Lengkap */}
                     <View className="bg-neutral-50 border border-neutral-100 rounded-2xl h-14 px-4 mb-4 flex-row items-center">
                         <Ionicons name="person-outline" size={20} color="#9CA3AF" />
-                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textFullName} placeholderTextColor="#9CA3AF" />
+                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textFullName} placeholderTextColor="#9CA3AF" value={name} onChangeText={setName} editable={!isSubmitting} />
+                    </View>
+
+                    {/* Input Username */}
+                    <View className="bg-neutral-50 border border-neutral-100 rounded-2xl h-14 px-4 mb-4 flex-row items-center">
+                        <Ionicons name="at-outline" size={20} color="#9CA3AF" />
+                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textUsername} placeholderTextColor="#9CA3AF" value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} editable={!isSubmitting} />
                     </View>
 
                     {/* Input Email */}
                     <View className="bg-neutral-50 border border-neutral-100 rounded-2xl h-14 px-4 mb-4 flex-row items-center">
                         <Ionicons name="mail-outline" size={20} color="#9CA3AF" />
-                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textEmail} placeholderTextColor="#9CA3AF" keyboardType="email-address" autoCapitalize="none" />
+                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textEmail} placeholderTextColor="#9CA3AF" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} value={email} onChangeText={setEmail} editable={!isSubmitting} />
                     </View>
 
                     {/* Input Password */}
                     <View className="bg-neutral-50 border border-neutral-100 rounded-2xl h-14 px-4 mb-4 flex-row items-center">
                         <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
-                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textPassword} placeholderTextColor="#9CA3AF" secureTextEntry={!showPassword} />
+                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textPassword} placeholderTextColor="#9CA3AF" secureTextEntry={!showPassword} autoCapitalize="none" value={password} onChangeText={setPassword} editable={!isSubmitting} />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="ml-2">
                             <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#9CA3AF" />
                         </TouchableOpacity>
@@ -87,7 +154,7 @@ export default function RegisterScreen() {
                     {/* Input Konfirmasi Password */}
                     <View className="bg-neutral-50 border border-neutral-100 rounded-2xl h-14 px-4 mb-6 flex-row items-center">
                         <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
-                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textConfirmPassword} placeholderTextColor="#9CA3AF" secureTextEntry={!showConfirmPassword} />
+                        <TextInput className="text-neutral-900 ml-3 text-sm flex-1" placeholder={t.textConfirmPassword} placeholderTextColor="#9CA3AF" secureTextEntry={!showConfirmPassword} autoCapitalize="none" value={confirmPassword} onChangeText={setConfirmPassword} editable={!isSubmitting} />
                         <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} className="ml-2">
                             <Ionicons name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#9CA3AF" />
                         </TouchableOpacity>
@@ -96,14 +163,29 @@ export default function RegisterScreen() {
                     {/* Tombol Utama Daftar */}
                     <TouchableOpacity
                         onPress={handleRegister}
-                        className="bg-amber-400 h-14 w-full rounded-2xl flex-row items-center justify-center shadow-lg shadow-amber-400/30"
+                        disabled={isSubmitting || retryAfter > 0}
+                        className={`bg-amber-400 h-14 w-full rounded-2xl flex-row items-center justify-center shadow-lg shadow-amber-400/30 ${isSubmitting || retryAfter > 0 ? 'opacity-70' : ''}`}
                         activeOpacity={0.8}
                     >
-                        <Text className="text-neutral-900 font-bold text-base tracking-wide">
-                            {t.textRegister}
-                        </Text>
-                        <Ionicons name="arrow-forward" size={18} color="#171717" className="ml-2" />
+                        {isSubmitting ? (
+                            <ActivityIndicator color="#171717" />
+                        ) : (
+                            <>
+                                <Text className="text-neutral-900 font-bold text-base tracking-wide">
+                                    {retryAfter > 0 ? `Coba lagi dalam ${retryAfter}s` : t.textRegister}
+                                </Text>
+                                {retryAfter === 0 && <Ionicons name="arrow-forward" size={18} color="#171717" className="ml-2" />}
+                            </>
+                        )}
                     </TouchableOpacity>
+
+                    {retryAfter > 0 ? (
+                        <Text className="text-red-600 text-sm text-center mt-3">
+                            Terlalu banyak percobaan. Coba lagi dalam {retryAfter} detik.
+                        </Text>
+                    ) : !!errorMessage && (
+                        <Text className="text-red-600 text-sm text-center mt-3">{errorMessage}</Text>
+                    )}
 
                     {/* Pembatas Or Konten */}
                     <View className="flex-row items-center my-6">

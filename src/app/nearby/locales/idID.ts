@@ -9,5 +9,10 @@ export default {
         hour: "j",
         day: "h",
         justNow: "Baru saja",
+        noResults: "Tidak ada orang ditemukan di radius ini.",
+        loadErrorTitle: "Gagal memuat",
+        loadErrorMessage: "Periksa koneksi dan coba lagi.",
+        waitingForLocation: "Menunggu lokasi...",
+        liveBadge: "LIVE",
     },
 };

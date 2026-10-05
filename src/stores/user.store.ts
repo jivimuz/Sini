@@ -31,16 +31,16 @@ const generateRandomPoint = (center: { lat: number, lon: number }, radius: numbe
 
 // Data dummy yang akan digunakan di seluruh aplikasi
 const dummyStatusData = [
-    { caption: "Menikmati suasana kota hari ini! ✨", image: require('@/../assets/images/dummy/images-1.jpeg'), location: "Grand Indonesia" },
-    { caption: "Perjalanan pulang kerja, langitnya bagus!", image: require('@/../assets/images/dummy/images-2.jpeg'), location: "Jalan Sudirman" },
-    { caption: "Golden hour di rumah 🌅", image: require('@/../assets/images/dummy/images-3.jpeg'), location: "Rumah" },
-    { caption: "OTW cari makan malem.", image: require('@/../assets/images/dummy/images-4.jpeg'), location: "Sekitar Blok M" },
-    { caption: "Kopi sore ☕️", image: require('@/../assets/images/dummy/images-1.jpeg'), location: "Starbucks" },
-    { caption: "Lagi di event jejepangan~", image: require('@/../assets/images/dummy/images-2.jpeg'), location: "GBK" },
-    { caption: "Macet banget!", image: require('@/../assets/images/dummy/images-3.jpeg'), location: "Gatot Subroto" },
-    { caption: "Belajar buat ujian besok.", image: require('@/../assets/images/dummy/images-4.jpeg'), location: "Perpustakaan" },
-    { caption: "Nonton konser, seru!!", image: require('@/../assets/images/dummy/images-1.jpeg'), location: "ICE BSD" },
-    { caption: "Akhirnya weekend! Mau jalan-jalan! Coba deh! Akhirnya weekend! Mau jalan-jalan! Coba deh!", image: require('@/../assets/images/dummy/images-2.jpeg'), location: "Pantai Ancol" },
+    { caption: "Menikmati suasana kota hari ini! ✨", images: [require('@/../assets/images/dummy/images-1.jpeg'), require('@/../assets/images/dummy/images-2.jpeg')], location: "Grand Indonesia" },
+    { caption: "Perjalanan pulang kerja, langitnya bagus!", images: [require('@/../assets/images/dummy/images-2.jpeg')], location: "Jalan Sudirman" },
+    { caption: "Golden hour di rumah 🌅", images: [require('@/../assets/images/dummy/images-3.jpeg'), require('@/../assets/images/dummy/images-4.jpeg'), require('@/../assets/images/dummy/images-1.jpeg')], location: "Rumah" },
+    { caption: "OTW cari makan malem.", images: [require('@/../assets/images/dummy/images-4.jpeg')], location: "Sekitar Blok M" },
+    { caption: "Kopi sore ☕️", images: [require('@/../assets/images/dummy/images-1.jpeg'), require('@/../assets/images/dummy/images-1.jpeg')], location: "Starbucks" },
+    { caption: "Lagi di event jejepangan~", images: [require('@/../assets/images/dummy/images-2.jpeg'), require('@/../assets/images/dummy/images-2.jpeg')], location: "GBK" },
+    { caption: "Macet banget!", images: [require('@/../assets/images/dummy/images-3.jpeg'), require('@/../assets/images/dummy/images-3.jpeg')], location: "Gatot Subroto" },
+    { caption: "Belajar buat ujian besok.", images: [require('@/../assets/images/dummy/images-4.jpeg')], location: "Perpustakaan" },
+    { caption: "Nonton konser, seru!!", images: [require('@/../assets/images/dummy/images-1.jpeg')], location: "ICE BSD" },
+    { caption: "Akhirnya weekend! Mau jalan-jalan! Coba deh! Akhirnya weekend! Mau jalan-jalan! Coba deh!", images: [require('@/../assets/images/dummy/images-2.jpeg')], location: "Pantai Ancol" },
 ];
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -60,9 +60,11 @@ export const useUserStore = create<UserState>((set, get) => ({
             const randomPastDate = new Date();
             randomPastDate.setHours(randomPastDate.getHours() - Math.random() * 24);
             const statusInfo = dummyStatusData[i % dummyStatusData.length];
+            const isSelling = randomCategory === 'selling';
 
             dummyData.push({
                 id: `user-${i}`,
+                customerId: `user-${i}`,
                 ...randomLocation,
                 name: names[i % names.length],
                 avatarUrl: `https://i.pravatar.cc/150?u=user${i}`,
@@ -70,13 +72,16 @@ export const useUserStore = create<UserState>((set, get) => ({
                 color: CATEGORIES.find(c => c.key === randomCategory)?.color || '#000000',
                 created_at: randomPastDate.toISOString(),
                 is_live: i % 2 === 0,
+                aspect_ratio: [9, 16], // Menambahkan aspect ratio default
                 is_liked: false,
-                is_selling: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? true : false,
-                price: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? Math.floor(Math.random() * 100000000) : null,
+                is_selling: isSelling,
+                price: isSelling ? Math.floor(Math.random() * 1000000) : null,
                 currency_symbol: 'Rp',
                 like_count: Math.floor(Math.random() * 100),
-                title: CATEGORIES.find(c => c.key === randomCategory)?.name == "Selling" ? sellingItems[i % sellingItems.length] : null,
-                caption: statusInfo.caption, statusImageUrl: statusInfo.image, location_name: statusInfo.location,
+                title: isSelling ? sellingItems[i % sellingItems.length] : null,
+                caption: statusInfo.caption,
+                statusImageUrls: statusInfo.images,
+                location_name: statusInfo.location,
             });
         }
         set({ users: dummyData });

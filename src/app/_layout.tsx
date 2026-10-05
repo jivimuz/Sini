@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
 import "../global.css";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
-// 1. IMPORT SLOT DAN ROUTER DARI EXPO-ROUTER
-import { Slot, usePathname, useRouter } from "expo-router";
+// Root navigator dan router Expo Router
+import { Stack, usePathname, useRouter } from "expo-router";
 
 import FloatingNavbar from "@/components/FloatingNavbar/FloatingNavbar";
 import StatusBottomSheet from "@/components/Status/StatusBottomSheet";
 import UserProfileModal from "@/components/UserProfileModal/UserProfileModal";
+import ViewersBottomSheet from "@/app/post/screens/viewers";
 
 import { useTab } from "@/stores/tab.store";
 import CustomSplashScreen from "@/components/CustomSplashScreen/CustomSplashScreen";
+import BiometricLockScreen from "@/components/BiometricLock/BiometricLockScreen";
 import ToastMessage from "react-native-toast-message";
 import {
   toastConfig,
 } from "@/utils/Toast";
 import { useAuth } from "@/stores/auth.store";
 import { useIsAppReady } from "@/stores/app.store";
+import { usePushNotificationRegistration } from "@/hooks/usePushNotificationRegistration";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,7 +29,9 @@ export default function TabLayout() {
   const router = useRouter(); // Ambil instance router
   const pathname = usePathname(); // Ambil instance router
   const { isAppReady, setIsAppReady } = useIsAppReady(); // Ambil instance app ready store
-  const { isLoggedIn } = useAuth(); // Ambil instance auth store
+  const { isLoggedIn, isHydrated, needsBiometricUnlock, hydrate } = useAuth(); // Ambil instance auth store
+
+  usePushNotificationRegistration();
 
   const authPages = ["/auth/login", "/auth/register", "/auth/forgot-password"];
   const isAuthPage = authPages.includes(pathname);
@@ -46,14 +50,25 @@ export default function TabLayout() {
     prepare();
   }, [isAppReady]);
 
+  // Pulihkan sesi dari SecureStore sekali di awal (lihat auth.store.hydrate) sebelum
+  // layar mana pun diputuskan -- tanpa ini, redirect di bawah selalu melempar ke
+  // /auth/login duluan karena isLoggedIn masih default false.
   useEffect(() => {
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Saat gerbang biometrik tampil, isLoggedIn sengaja false menunggu Face ID/Touch ID --
+    // jangan ikut melempar ke /auth/login, nanti unlockWithBiometrics() yang menentukan tujuan.
+    if (!isHydrated || needsBiometricUnlock) return;
     if (!isLoggedIn && !isAuthPage) {
       router.navigate("/auth/login");
     }
     if (isLoggedIn && isAuthPage) {
       router.navigate("/");
     }
-  }, [pathname]);
+  }, [pathname, isHydrated, isLoggedIn, needsBiometricUnlock]);
 
   // 2. SINKRONISASI KLIK NAVBAR DENGAN NAVIGATION PATH EXPO ROUTER
   useEffect(() => {
@@ -69,29 +84,29 @@ export default function TabLayout() {
   }, [activeTab, isAppReady]);
 
 
-  if (!isAppReady) {
+  if (!isAppReady || !isHydrated) {
     return <CustomSplashScreen onLayout={SplashScreen.hideAsync} />;
   }
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* 
-        3. GANTI ANIMATED.VIEW LAMA DENGAN SLOT MURNI EXPO ROUTER
-        Slot ini otomatis akan merender halaman sesuai URL aktif (termasuk chatRoom/[id])
-      */}
+      <Stack screenOptions={{ headerShown: false }} />
 
-      <View style={{ flex: 1 }}>
-        <Slot />
-      </View>
+      {needsBiometricUnlock && <BiometricLockScreen />}
 
-      {!isAuthPage && (
+      {!isAuthPage && isAppReady && isHydrated && !needsBiometricUnlock && (
         <FloatingNavbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
       )}
 
-      <StatusBottomSheet />
-      <UserProfileModal />
+      {isAppReady && isHydrated && !needsBiometricUnlock && (
+        <>
+          <StatusBottomSheet />
+          <UserProfileModal />
+          <ViewersBottomSheet />
+        </>
+      )}
 
       <ToastMessage
         config={toastConfig}

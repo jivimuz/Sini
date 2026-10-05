@@ -1,4 +1,6 @@
-// Pastikan isi file types/chat.ts Anda mendukung skema ini:
+// UI-facing message shape consumed by the presentational components (MessageBubble,
+// LocationBubble, DateSeparator). Raw API rows (see ../api/messages.ts: ApiChatMessage) are
+// mapped into this shape in chat.store.ts -- components never see the backend's field names.
 export interface ChatMessage {
     id: string;
     senderId: string;
@@ -7,6 +9,9 @@ export interface ChatMessage {
     text?: string;
     label?: string; // Untuk tipe 'date'
     createdAt: string;
+    /** Raw ISO timestamp, kept alongside the formatted `createdAt` display string so day
+     * boundaries can be computed for date separators (absent on synthetic "date" rows). */
+    createdAtIso?: string;
     seen: boolean;
     location?: {
         latitude: number;
@@ -14,19 +19,4 @@ export interface ChatMessage {
         title: string;
         distance?: string;
     };
-}
-
-export interface ChatStore {
-    messages: ChatMessage[];
-    typing: boolean;
-
-    addMessage: (message: ChatMessage) => void;
-
-    sendMessage: (text: string) => void;
-
-    sendLocation: () => void;
-
-    markSeen: (id: string) => void;
-
-    setTyping: (typing: boolean) => void;
 }

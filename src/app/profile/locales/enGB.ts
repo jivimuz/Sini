@@ -7,8 +7,7 @@ export default {
 
         // Menu Items
         editProfile: "Edit Profile",
-        notifications: "Notifications",
-        security: "Security",
+        settingsMenu: "Settings",
         helpCenter: "Help Center",
         aboutApp: "About App",
         logout: "Logout",
@@ -21,5 +20,60 @@ export default {
             en: "English"
         }
 
+    },
+    editProfileScreen: {
+        title: "Edit Profile",
+        emailLabel: "Email",
+        nameLabel: "Full Name",
+        namePlaceholder: "Enter your full name",
+        usernameLabel: "Username",
+        usernamePlaceholder: "Enter your username",
+        phoneLabel: "Phone Number",
+        phonePlaceholder: "Enter your phone number (optional)",
+        bioLabel: "Bio",
+        bioPlaceholder: "Tell us a bit about yourself (optional)",
+        saveButton: "Save Changes",
+        saveSuccess: "Profile updated successfully",
+        requiredFieldsError: "Name and username are required.",
+        genericError: "Please check your profile data.",
+        networkError: "Failed to save. Check your connection and try again.",
+        loadErrorTitle: "Failed to load profile",
+        loadErrorMessage: "Check your connection and try again.",
+    },
+    settingScreen: {
+        title: "Settings",
+
+        notificationSection: "Notifications",
+        notificationTitle: "Receive Notifications",
+        notificationSubtitle: "Get notified by the app on this device.",
+        notificationEnabledSuccess: "Notifications enabled",
+        notificationDisabledSuccess: "Notifications turned off",
+        notificationPermissionDenied: "Notification permission denied. Enable it from your device settings.",
+
+        changePasswordSection: "Change Password",
+        changePasswordRow: "Change Password",
+        changePasswordRowSubtitle: "Update your account password regularly.",
+        cancelButton: "Cancel",
+        currentPasswordPlaceholder: "Current password",
+        newPasswordPlaceholder: "New password",
+        confirmPasswordPlaceholder: "Confirm new password",
+        saveButton: "Change Password",
+        saveSuccessTitle: "Password changed successfully",
+        saveSuccessMessage: "Other devices have been signed out automatically.",
+        allFieldsRequiredError: "All password fields are required.",
+        confirmMismatchError: "New password confirmation does not match.",
+        genericError: "Please check your password.",
+        rateLimitError: "Too many attempts. Wait a moment and try again.",
+        networkError: "Failed to save. Check your connection and try again.",
+
+        biometricSection: "Biometric Login",
+        biometricTitle: "Sign in with Face ID/Touch ID",
+        biometricCheckingSubtitle: "Checking device...",
+        biometricUnsupportedSubtitle: "This device does not support Face ID/Touch ID.",
+        biometricNotEnrolledSubtitle: "Set up Face ID/Touch ID in your device settings first.",
+        biometricAvailableSubtitle: "Automatically sign in with Face ID/Touch ID when opening the app.",
+        biometricEnabledSuccess: "Biometric login enabled",
+        biometricCancelledTitle: "Cancelled",
+        biometricCancelledMessage: "Biometric login was not enabled.",
     }
 };

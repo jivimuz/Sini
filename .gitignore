@@ -18,6 +18,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Google/Firebase service account keys should live on the backend only, never bundled
+# into the mobile app (the private key would ship inside the app binary).
+*-service-account.json
+gmaps-*.json
+
 # Metro
 .metro-health-check*
 

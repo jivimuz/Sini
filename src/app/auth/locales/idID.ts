@@ -15,6 +15,7 @@ export default {
         textTitle: "Buat Akun Baru dan temukan teman-teman di sekitarmu secara real-time",
         textRegister: "Daftar Sekarang",
         textFullName: "Nama Lengkap",
+        textUsername: "Username",
         textEmail: "Email",
         textPassword: "Kata Sandi",
         textConfirmPassword: "Konfirmasi Kata Sandi",

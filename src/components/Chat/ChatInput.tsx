@@ -21,11 +21,20 @@ type Props = {
 
     onSend: (text: string) => void;
 
+    onSendLocation?: () => void;
+
+    /** Called with true/false as the user starts/stops typing, for the typing-indicator broadcast. */
+    onTypingChange?: (isTyping: boolean) => void;
+
 };
 
 export default function ChatInput({
 
     onSend,
+
+    onSendLocation,
+
+    onTypingChange,
 
 }: Props) {
 
@@ -37,6 +46,29 @@ export default function ChatInput({
     const emojiRef =
         useRef<BottomSheet>(null);
 
+    const typingTimeoutRef =
+        useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const isTypingRef =
+        useRef(false);
+
+    const handleChangeText = (value: string) => {
+        setText(value);
+
+        if (!onTypingChange) return;
+
+        if (!isTypingRef.current) {
+            isTypingRef.current = true;
+            onTypingChange(true);
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            isTypingRef.current = false;
+            onTypingChange(false);
+        }, 2000);
+    };
+
     const send = () => {
 
         if (!text.trim()) return;
@@ -44,6 +76,12 @@ export default function ChatInput({
         onSend(text);
 
         setText("");
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        if (isTypingRef.current) {
+            isTypingRef.current = false;
+            onTypingChange?.(false);
+        }
 
     };
     const textInputRef = useRef<TextInput>(null);
@@ -101,7 +139,7 @@ export default function ChatInput({
                         <TextInput
                             value={text}
                             ref={textInputRef}
-                            onChangeText={setText}
+                            onChangeText={handleChangeText}
                             placeholder="Tulis pesan..."
                             multiline
                             className="
@@ -179,6 +217,7 @@ export default function ChatInput({
 
             <AttachmentSheet
                 ref={attachmentRef}
+                onSendLocation={onSendLocation}
             />
 
             <EmojiPicker

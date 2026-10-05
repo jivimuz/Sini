@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631398637661",
+    "project_id": "gmaps-395105",
+    "storage_bucket": "gmaps-395105.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631398637661:android:88b29a281659edb88aedb4",
+        "android_client_info": {
+          "package_name": "com.sini.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbz52ornX6fZd5zKm0Hbi27J6y_C-z-9Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

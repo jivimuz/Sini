@@ -10,10 +10,12 @@
     "ios": {
       "icon": "./assets/images/Sini-logo.jpg",
       "supportsTablet": true,
-      "bundleIdentifier": "com.sini.app"
+      "bundleIdentifier": "com.sini.app",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "package": "com.sini.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/Sini-logo.jpg",
@@ -33,11 +35,23 @@
       "expo-router",
       "expo-splash-screen",
       "expo-secure-store",
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "expo-image",
+      "expo-web-browser",
+      "expo-font",
+      "expo-status-bar",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Izinkan Sini menggunakan Face ID untuk masuk dengan cepat dan aman."
+        }
+      ],
+      "expo-notifications",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "extra": {
       "router": {},

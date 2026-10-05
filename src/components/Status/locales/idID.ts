@@ -8,5 +8,8 @@ export default {
         hour: "jam",
         day: "hari",
         justNow: "Baru saja",
+        endPostButton: "Akhiri Postingan",
+        sendMessageErrorTitle: "Gagal Mengirim",
+        sendMessageErrorMessage: "Pesan tidak terkirim. Periksa koneksi dan coba lagi.",
     },
 };

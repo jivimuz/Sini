@@ -11,11 +11,13 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { router } from "expo-router";
 
+const DEFAULT_AVATAR = require('@/../assets/images/default-user.png');
+
 interface Props {
 
     name: string;
 
-    avatar: string;
+    avatar?: string | null;
 
     online?: boolean;
 
@@ -59,9 +61,7 @@ export default function ChatHeader({
             </TouchableOpacity>
 
             <Image
-                source={{
-                    uri: avatar,
-                }}
+                source={avatar ? { uri: avatar } : DEFAULT_AVATAR}
                 className="
                 w-11
                 h-11

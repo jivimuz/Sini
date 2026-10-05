@@ -15,6 +15,7 @@ export default {
         textLog: "Log in to your account",
         textRegister: "Register Now",
         textFullName: "Full Name",
+        textUsername: "Username",
         textEmail: "Email",
         textPassword: "Password",
         textConfirmPassword: "Confirm Password",

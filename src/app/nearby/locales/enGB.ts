@@ -9,5 +9,10 @@ export default {
         hour: "h",
         day: "d",
         justNow: "Just now",
+        noResults: "No one found in this radius.",
+        loadErrorTitle: "Failed to load",
+        loadErrorMessage: "Check your connection and try again.",
+        waitingForLocation: "Waiting for location...",
+        liveBadge: "LIVE",
     },
 };

@@ -1,13 +1,16 @@
 import { DummyMarker } from "../stores/marker.store";
 
-export interface ClusterItem {
+export interface ClusterItem<T extends DummyMarker = DummyMarker> {
     id: string;
     latitude: number;
     longitude: number;
-    members: DummyMarker[];
+    members: T[];
 }
 
-export type MapItem = DummyMarker | ClusterItem;
+// Generic over T so callers passing a richer type (e.g. UserStatus, which structurally
+// satisfies DummyMarker) get that full type back out of non-cluster items, instead of
+// every member being narrowed down to just DummyMarker's fields.
+export type MapItem<T extends DummyMarker = DummyMarker> = T | ClusterItem<T>;
 
 function getClusterRadius(zoom: number) {
     if (zoom >= 19) return 12;
@@ -46,25 +49,25 @@ function getDistance(
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function clusterMarkers(
-    markers: DummyMarker[],
+export function clusterMarkers<T extends DummyMarker>(
+    markers: T[],
     zoom: number
-): MapItem[] {
+): MapItem<T>[] {
 
     const radius = getClusterRadius(zoom);
 
     const visited = new Set<string>();
 
-    const result: MapItem[] = [];
+    const result: MapItem<T>[] = [];
 
     for (const marker of markers) {
 
         if (visited.has(marker.id))
             continue;
 
-        const queue: DummyMarker[] = [marker];
+        const queue: T[] = [marker];
 
-        const cluster: DummyMarker[] = [];
+        const cluster: T[] = [];
 
         visited.add(marker.id);
 
