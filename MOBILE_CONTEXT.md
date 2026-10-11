@@ -41,6 +41,7 @@ Route utama:
 
 - `/auth/login`
 - `/auth/register`
+- `/auth/verify-email`
 - `/auth/forgot-password`
 - `/` atau `/home`
 - `/nearby`
@@ -65,8 +66,10 @@ Semua path di bawah relatif terhadap `EXPO_PUBLIC_API_BASE_URL`.
 
 ### Auth
 
-- `POST /auth/login`: `{ email, password }` -> `{ accessToken, tokenType, refreshToken?, expiresIn?, user? }`
-- `POST /auth/register`: `{ name, email, password, username?, phone? }`
+- `POST /auth/login`: `{ email, password }` -> `{ accessToken, tokenType, refreshToken?, expiresIn?, user? }`, atau `403 { message, email, requiresVerification: true }` jika email belum diverifikasi
+- `POST /auth/register`: `{ name, email, password, username?, phone? }` -> `201 { message, email }` (tidak ada token; mengirim kode verifikasi ke email)
+- `POST /auth/verify-email`: `{ email, code }` -> sukses mengembalikan sesi yang sama dengan login; lihat `API_CONTRACT.md` untuk kasus error (kode salah, kedaluwarsa, terlalu banyak percobaan, sudah diverifikasi)
+- `POST /auth/resend-verification-code`: `{ email }`
 - `POST /auth/forgot-password`: `{ email }`
 - `POST /auth/logout`: `{ refreshToken? }`
 - `POST /auth/refresh-token`: `{ refreshToken }`

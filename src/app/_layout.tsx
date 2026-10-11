@@ -33,7 +33,7 @@ export default function TabLayout() {
 
   usePushNotificationRegistration();
 
-  const authPages = ["/auth/login", "/auth/register", "/auth/forgot-password"];
+  const authPages = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/verify-email"];
   const isAuthPage = authPages.includes(pathname);
 
   // Load App Effect

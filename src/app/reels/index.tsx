@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
-    TouchableOpacity,
     TextInput,
     ImageBackground,
     ImageSourcePropType,
     FlatList,
     Dimensions,
     ActivityIndicator,
+    TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
@@ -114,7 +114,7 @@ const ReelCard = ({ post, height, onToggleLike, t }: {
                 <TouchableOpacity onPress={() => router.back()} activeOpacity={0.8} className="h-10 w-10 rounded-full bg-black/40 items-center justify-center mr-3">
                     <Ionicons name="chevron-back" size={22} color="white" />
                 </TouchableOpacity>
-                <TouchableOpacity activeOpacity={0.8} onPress={() => openProfile(post.id)} className="flex-row items-center flex-1">
+                <TouchableOpacity activeOpacity={0.8} onPress={() => openProfile(post.customerId)} className="flex-row items-center flex-1">
                     <View
                         className="h-10 w-10 rounded-full border-2 border-yellow-400 overflow-hidden bg-neutral-700"
                         style={{ borderColor: post.is_live ? '#22c55e' : '#FFD84D' }}

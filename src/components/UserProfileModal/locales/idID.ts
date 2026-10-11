@@ -1,10 +1,15 @@
 export default {
     userProfileModal: {
         bio: "Bio",
-        status: "Status",
-        joined: "Bergabung",
-        socialMedia: "Media Sosial",
+        noBio: "Belum ada bio.",
+        followers: "Pengikut",
+        following: "Mengikuti",
+        follow: "Ikuti",
+        unfollow: "Mengikuti",
         chat: "Chat",
-        seeStatus: "Lihat Status",
+        loadErrorTitle: "Gagal memuat",
+        loadErrorMessage: "Gagal memuat profil. Periksa koneksi dan coba lagi.",
+        followErrorTitle: "Gagal",
+        followErrorMessage: "Aksi gagal. Periksa koneksi dan coba lagi.",
     },
 };

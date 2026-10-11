@@ -31,6 +31,18 @@ export default {
         sendResetLink: "Kirim Link Reset",
         textBackToLogin: "Ingat kata sandi Anda?",
         textLogin: "Masuk",
+    },
+    verifyEmail: {
+        textTitle: "Verifikasi Email",
+        textDescription: "Kami telah mengirim kode verifikasi 6 digit ke",
+        codeLabel: "Kode Verifikasi",
+        codePlaceholder: "Masukkan 6 digit kode",
+        verifyButton: "Verifikasi",
+        noCode: "Tidak menerima kode?",
+        resendCode: "Kirim Ulang Kode",
+        resendSent: "Kode baru telah dikirim ke email Anda.",
+        textBackToRegister: "Salah memasukkan email?",
+        textRegister: "Daftar Ulang",
     }
 
 };

@@ -10,7 +10,7 @@ import { GoogleButton } from '@/components/Auth/GoogleButton/GoogleButton';
 import { useLang } from '@/stores/lang.store';
 import locales from './locales';
 import { LanguageSwitch } from '@/components/Lang/SwitchLangButton';
-import { login as loginRequest } from './api/login';
+import { login as loginRequest, LoginVerificationRequiredPayload } from './api/login';
 import { tokenStorage } from '../api/client';
 import { ApiError } from '../api/types';
 
@@ -59,6 +59,11 @@ export default function LoginScreen() {
                 setErrorMessage('Periksa kembali email dan password Anda.');
             } else if (error instanceof ApiError && error.status === 401) {
                 setErrorMessage(error.message);
+            } else if (error instanceof ApiError && error.status === 403 && (error.details as Partial<LoginVerificationRequiredPayload> | undefined)?.requiresVerification) {
+                // Backend now blocks login for an unverified email instead of letting it through --
+                // send the user to the same verify-email flow register.tsx hands off to.
+                const details = error.details as LoginVerificationRequiredPayload;
+                router.push({ pathname: '/auth/verify-email', params: { email: details.email ?? email.trim() } });
             } else if (error instanceof ApiError && error.status === 429) {
                 setRetryAfter(error.retryAfter ?? 60);
             } else if (error instanceof ApiError && error.status >= 500) {

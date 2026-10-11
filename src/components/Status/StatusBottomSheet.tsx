@@ -17,11 +17,11 @@ import {
     ActivityIndicator,
     Image,
     ImageSourcePropType,
-    TouchableOpacity,
     ImageBackground,
     TextInput,
     FlatList,
     Dimensions,
+    TouchableOpacity,
 } from "react-native";
 import { useStatusStore } from "@/components/Status/stores/status.store";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
@@ -196,7 +196,7 @@ export default function StatusBottomSheet() {
                         <View className="p-6 pt-8 absolute top-0 left-0 right-0 z-10" >
                             {/* Avatar, Nama, Lokasi */}
                             <View className="flex-row items-center gap-1">
-                                <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.id)}>
+                                <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.customerId)}>
                                     <Image
                                         source={{ uri: status?.avatarUrl }} resizeMode="cover"
                                         className="h-14 w-14 rounded-full border-2 border-yellow-400"
@@ -205,7 +205,7 @@ export default function StatusBottomSheet() {
                                 <View className="ml-4 flex-1">
                                     <View className="flex-row justify-between items-baseline">
                                         <View className="flex-row items-center">
-                                            <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.id)}>
+                                            <TouchableOpacity activeOpacity={0.8} onPress={() => status && openProfile(status.customerId)}>
                                                 <Text className="text-lg font-bold text-white shadow-sm">
                                                     {status.name.split(' ')[0]}
                                                 </Text>

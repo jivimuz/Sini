@@ -31,6 +31,18 @@ export default {
         sendResetLink: "Send Reset Link",
         textBackToLogin: "Remember your password?",
         textLogin: "Log In",
+    },
+    verifyEmail: {
+        textTitle: "Verify Your Email",
+        textDescription: "We've sent a 6-digit verification code to",
+        codeLabel: "Verification Code",
+        codePlaceholder: "Enter 6-digit code",
+        verifyButton: "Verify",
+        noCode: "Didn't receive the code?",
+        resendCode: "Resend Code",
+        resendSent: "A new code has been sent to your email.",
+        textBackToRegister: "Entered the wrong email?",
+        textRegister: "Register Again",
     }
 
 };

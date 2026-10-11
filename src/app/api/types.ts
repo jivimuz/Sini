@@ -6,7 +6,15 @@ export interface ApiRequestOptions<TBody = unknown> {
     path: string;
     method?: ApiMethod;
     query?: object;
-    body?: TBody;
+    /**
+     * A plain body value, or a thunk that resolves one. `client.ts`'s `apiRequest` retries a
+     * 401 by re-invoking `performFetch` with the SAME `options` object once a token refresh has
+     * completed -- a plain object body captured before the first attempt would still hold
+     * whatever was true before the refresh (e.g. a now-rotated refresh token). Pass a thunk for
+     * any field that must reflect storage/state as of actual send time; it is invoked once per
+     * attempt (initial and retry alike).
+     */
+    body?: TBody | (() => TBody | Promise<TBody>);
     headers?: HeadersInit;
     signal?: AbortSignal;
 }

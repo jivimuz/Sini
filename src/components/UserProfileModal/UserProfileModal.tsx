@@ -1,35 +1,87 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useProfileModalStore } from '@/stores/profileModal.store';
-import { useUserStore } from '@/stores/user.store';
+import { getCustomerProfile, CustomerProfile } from '@/app/profile/api/show';
+import { followCustomer, unfollowCustomer } from '@/app/profile/api/follow';
+import { useChatStore } from '@/app/chat/stores/chat.store';
 import { Ionicons } from '@expo/vector-icons';
-import * as Linking from "expo-linking";
+import { router } from 'expo-router';
 import localest from './locales';
 import { useLang } from '@/stores/lang.store';
+import Toast from '@/utils/Toast';
 
 export default function UserProfileModal() {
     const sheetRef = useRef<BottomSheet>(null);
     const { selectedUserId, closeProfile } = useProfileModalStore();
+    const { startConversationWith } = useChatStore();
 
-    const user = useUserStore(state =>
-        selectedUserId ? state.users.find(u => u.id === selectedUserId) : null
-    );
+    const [profile, setProfile] = useState<CustomerProfile | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFollowPending, setIsFollowPending] = useState(false);
+    const [isStartingChat, setIsStartingChat] = useState(false);
+
     const { lang } = useLang()
-
     const t = localest[lang].userProfileModal;
     const snapPoints = useMemo(() => ['60%'], []);
 
     useEffect(() => {
-        if (selectedUserId) {
-            sheetRef.current?.expand();
-        } else {
+        if (!selectedUserId) {
             sheetRef.current?.close();
+            setProfile(null);
+            return;
         }
+
+        sheetRef.current?.expand();
+        setIsLoading(true);
+        getCustomerProfile(selectedUserId)
+            .then(setProfile)
+            .catch(() => Toast.error(t.loadErrorTitle, t.loadErrorMessage))
+            .finally(() => setIsLoading(false));
     }, [selectedUserId]);
 
-    const content = user ? (
-        <BottomSheetView className="flex-1 bg-gray-50 px-6 pt-5  pb-20">
+    const handleToggleFollow = async () => {
+        if (!profile || isFollowPending) return;
+        const wasFollowing = profile.isFollowing;
+
+        setIsFollowPending(true);
+        setProfile((prev) => prev && {
+            ...prev,
+            isFollowing: !wasFollowing,
+            followersCount: prev.followersCount + (wasFollowing ? -1 : 1),
+        });
+
+        try {
+            const result = wasFollowing ? await unfollowCustomer(profile.id) : await followCustomer(profile.id);
+            setProfile(result);
+        } catch {
+            setProfile((prev) => prev && { ...prev, isFollowing: wasFollowing, followersCount: prev.followersCount });
+            Toast.error(t.followErrorTitle, t.followErrorMessage);
+        } finally {
+            setIsFollowPending(false);
+        }
+    };
+
+    const handleChat = async () => {
+        if (!profile || isStartingChat) return;
+        setIsStartingChat(true);
+        try {
+            const conversation = await startConversationWith(profile.id);
+            closeProfile();
+            router.navigate(`/chat/screens/chatRoom/${conversation.id}` as any);
+        } catch {
+            Toast.error(t.followErrorTitle, t.followErrorMessage);
+        } finally {
+            setIsStartingChat(false);
+        }
+    };
+
+    const content = isLoading ? (
+        <BottomSheetView className="flex-1 bg-gray-50 items-center justify-center py-20">
+            <ActivityIndicator color="#FFD84D" />
+        </BottomSheetView>
+    ) : profile ? (
+        <BottomSheetView className="flex-1 bg-gray-50 px-6 pt-5 pb-20">
 
             {/* Avatar */}
             <View className="flex-row justify-end">
@@ -44,7 +96,7 @@ export default function UserProfileModal() {
 
                     <Image
                         source={{
-                            uri: user.avatarUrl,
+                            uri: profile.avatarUrl ?? undefined,
                         }}
                         className="
                     w-28
@@ -55,19 +107,21 @@ export default function UserProfileModal() {
                     "
                     />
 
-                    <View
-                        className="
-                    absolute
-                    bottom-1
-                    right-1
-                    w-5
-                    h-5
-                    rounded-full
-                    bg-green-500
-                    border-2
-                    border-white
-                    "
-                    />
+                    {profile.isOnline && (
+                        <View
+                            className="
+                        absolute
+                        bottom-1
+                        right-1
+                        w-5
+                        h-5
+                        rounded-full
+                        bg-green-500
+                        border-2
+                        border-white
+                        "
+                        />
+                    )}
 
                 </View>
 
@@ -79,11 +133,11 @@ export default function UserProfileModal() {
                 text-neutral-800
                 "
                 >
-                    {user.name}
+                    {profile.name}
                 </Text>
 
                 <Text className="text-neutral-500">
-                    @{user.name.toLowerCase().replace(/\s/g, "")}
+                    @{profile.username}
                 </Text>
 
             </View>
@@ -109,14 +163,10 @@ export default function UserProfileModal() {
                 leading-6
                 "
                 >
-                    Life is too short to stay at home.
+                    {profile.bio || t.noBio}
                 </Text>
 
             </View>
-
-            {/* Social */}
-
-
 
             {/* Stats */}
 
@@ -134,79 +184,24 @@ export default function UserProfileModal() {
                 <View className="items-center">
 
                     <Text className="text-2xl font-bold">
-                        24
+                        {profile.followersCount}
                     </Text>
 
                     <Text className="text-neutral-500">
-                        {t.status}
+                        {t.followers}
                     </Text>
 
                 </View>
 
                 <View className="items-center">
 
-                    <Text className="text-lg font-semibold">
-                        Jan 2026
+                    <Text className="text-2xl font-bold">
+                        {profile.followingCount}
                     </Text>
 
                     <Text className="text-neutral-500">
-                        {t.joined}
+                        {t.following}
                     </Text>
-
-                </View>
-
-            </View>
-            <View
-                className="
-            mt-5
-            bg-white
-            rounded-3xl
-            p-5
-             
-            "
-            >
-
-                <Text className="font-semibold text-center mb-4">
-                    {t.socialMedia}
-                </Text>
-
-                <View className="flex-row justify-around">
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            Linking.openURL("https://instagram.com")
-                        }
-                    >
-                        <Ionicons
-                            name="logo-instagram"
-                            size={30}
-                            color="#E1306C"
-                        />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            Linking.openURL("https://tiktok.com")
-                        }
-                    >
-                        <Ionicons
-                            name="musical-notes"
-                            size={30}
-                            color="#111827"
-                        />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={() =>
-                            Linking.openURL("https://facebook.com")
-                        }
-                    >
-                        <Ionicons
-                            name="logo-facebook"
-                            size={30}
-                            color="#1877F2"
-                        />
-                    </TouchableOpacity>
 
                 </View>
 
@@ -214,26 +209,41 @@ export default function UserProfileModal() {
 
             {/* Button */}
 
-            <View className="flex-row mt-6">
+            {!profile.isSelf && (
+                <View className="flex-row mt-6 gap-3">
 
-                <TouchableOpacity
-                    className="
-                flex-1
-                h-14
-                rounded-full
-                bg-[#FFD84D]
-                items-center
-                justify-center
-                "
-                >
-                    <Text className="font-bold">
-                        {t.chat}
-                    </Text>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleToggleFollow}
+                        disabled={isFollowPending}
+                        className={`flex-1 h-14 rounded-full items-center justify-center flex-row ${profile.isFollowing ? 'bg-white border border-gray-200' : 'bg-[#FFD84D]'}`}
+                        style={{ opacity: isFollowPending ? 0.7 : 1 }}
+                    >
+                        {isFollowPending ? (
+                            <ActivityIndicator size="small" color={profile.isFollowing ? '#171717' : 'black'} />
+                        ) : (
+                            <Text className={`font-bold ${profile.isFollowing ? 'text-neutral-800' : 'text-black'}`}>
+                                {profile.isFollowing ? t.unfollow : t.follow}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
 
+                    <TouchableOpacity
+                        onPress={handleChat}
+                        disabled={isStartingChat}
+                        className="flex-1 h-14 rounded-full bg-white border border-gray-200 items-center justify-center"
+                        style={{ opacity: isStartingChat ? 0.7 : 1 }}
+                    >
+                        {isStartingChat ? (
+                            <ActivityIndicator size="small" color="#171717" />
+                        ) : (
+                            <Text className="font-bold text-neutral-800">
+                                {t.chat}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
 
-
-            </View>
+                </View>
+            )}
 
         </BottomSheetView>
     ) : (

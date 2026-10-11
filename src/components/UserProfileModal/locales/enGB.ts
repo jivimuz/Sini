@@ -1,10 +1,15 @@
 export default {
     userProfileModal: {
         bio: "Bio",
-        status: "Status",
-        joined: "Joined",
-        socialMedia: "Social Media",
+        noBio: "No bio yet.",
+        followers: "Followers",
+        following: "Following",
+        follow: "Follow",
+        unfollow: "Following",
         chat: "Chat",
-        seeStatus: "See Status",
+        loadErrorTitle: "Failed to load",
+        loadErrorMessage: "Failed to load profile. Check your connection and try again.",
+        followErrorTitle: "Failed",
+        followErrorMessage: "That didn't work. Check your connection and try again.",
     },
 };

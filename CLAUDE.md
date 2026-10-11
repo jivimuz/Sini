@@ -52,6 +52,7 @@ Auth:
 
 - `/auth/login`
 - `/auth/register`
+- `/auth/verify-email`
 - `/auth/forgot-password`
 - `/auth/refresh-token`
 

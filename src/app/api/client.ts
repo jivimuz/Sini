@@ -1,9 +1,30 @@
 import * as SecureStore from "expo-secure-store";
 import { ApiError, ApiErrorPayload, ApiRequestOptions } from "./types";
+import { refreshToken as refreshTokenRequest } from "../auth/api/refresh-token";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
 const ACCESS_TOKEN_KEY = "sini.access-token";
 const REFRESH_TOKEN_KEY = "sini.refresh-token";
+
+// Public/unauthenticated auth endpoints never carry a meaningful access token, so a 401 from
+// them is a real credential/validation failure (e.g. wrong password), not an expired access
+// token -- never route these through the refresh-and-retry flow, or a bad login would be
+// masked by a confusing "session expired" error.
+const AUTH_EXEMPT_PATHS = new Set([
+    "/auth/login",
+    "/auth/register",
+    "/auth/refresh-token",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/auth/verify-email",
+    "/auth/resend-verification-code",
+]);
+
+const isAuthExemptPath = (path: string) => AUTH_EXEMPT_PATHS.has(path.startsWith("/") ? path : `/${path}`);
+
+// Tracks which multipart bodies already had `_method` appended, so retrying the same request
+// object after a token refresh doesn't append it a second time.
+const spoofedMultipartBodies = new WeakSet<FormData>();
 
 const normalizeBaseUrl = (value: string) => {
     const trimmedValue = value.trim().replace(/\/+$/, "");
@@ -107,35 +128,44 @@ export const tokenStorage = {
     },
 };
 
-export async function apiRequest<T, TBody = unknown>(options: ApiRequestOptions<TBody>): Promise<T> {
-    const accessToken = await tokenStorage.get();
+// Performs a single HTTP attempt with no retry/refresh behavior. `accessTokenOverride` lets the
+// post-refresh retry use the freshly issued access token instead of re-reading SecureStore.
+const performFetch = async <T, TBody = unknown>(options: ApiRequestOptions<TBody>, accessTokenOverride?: string): Promise<T> => {
+    const accessToken = accessTokenOverride ?? (await tokenStorage.get());
     const method = options.method ?? "GET";
+
+    // Resolve a thunk body fresh on every call -- `apiRequest`'s 401 retry re-invokes
+    // `performFetch` with this same `options` object, so a thunk (unlike a plain object
+    // captured once up front) picks up whatever the just-completed token refresh wrote to
+    // storage instead of resending a value captured before the refresh.
+    const body = typeof options.body === "function" ? await (options.body as () => TBody | Promise<TBody>)() : options.body;
 
     // PHP only populates $_FILES for POST requests, so a multipart body sent as PUT/PATCH/DELETE
     // never reaches Laravel's file validation (the field looks "missing" even though it was sent).
     // Spoof it the same way Laravel's own HTML forms do: send POST and let `_method` carry the verb.
-    const isMultipart = options.body instanceof FormData;
+    const isMultipart = body instanceof FormData;
     const spoofMethod = isMultipart && method !== "GET" && method !== "POST";
 
-    if (spoofMethod && options.body instanceof FormData) {
-        options.body.append("_method", method);
+    if (spoofMethod && body instanceof FormData && !spoofedMultipartBodies.has(body)) {
+        body.append("_method", method);
+        spoofedMultipartBodies.add(body);
     }
 
     const response = await fetch(buildUrl(options.path, options.query), {
         method: spoofMethod ? "POST" : method,
         headers: {
             Accept: "application/json",
-            ...(isPlainJsonBody(options.body) ? { "Content-Type": "application/json" } : {}),
+            ...(isPlainJsonBody(body) ? { "Content-Type": "application/json" } : {}),
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             ...(options.headers ?? {}),
         },
         body:
-            options.body === null || options.body === undefined
+            body === null || body === undefined
                 ? undefined
-                : options.body instanceof FormData || options.body instanceof Blob || options.body instanceof URLSearchParams || options.body instanceof ArrayBuffer
-                    ? options.body
-                    : isPlainJsonBody(options.body)
-                        ? JSON.stringify(options.body)
+                : body instanceof FormData || body instanceof Blob || body instanceof URLSearchParams || body instanceof ArrayBuffer
+                    ? body
+                    : isPlainJsonBody(body)
+                        ? JSON.stringify(body)
                         : undefined,
         signal: options.signal,
     });
@@ -148,4 +178,75 @@ export async function apiRequest<T, TBody = unknown>(options: ApiRequestOptions<
     }
 
     return parseResponse<T>(response);
+};
+
+/** In-flight refresh call shared by every concurrent 401, so only one refresh request ever fires. */
+let refreshPromise: Promise<string> | null = null;
+
+const clearSessionAndFail = async (): Promise<never> => {
+    await tokenStorage.clear();
+    throw new ApiError("Your session has expired. Please log in again.", 401);
+};
+
+const performTokenRefresh = async (): Promise<string> => {
+    const storedRefreshToken = await tokenStorage.getRefresh();
+
+    if (!storedRefreshToken) {
+        return clearSessionAndFail();
+    }
+
+    try {
+        const session = await refreshTokenRequest({ refreshToken: storedRefreshToken });
+        await tokenStorage.setSession(session);
+        return session.accessToken;
+    } catch (error) {
+        // Per API_CONTRACT.md, the session is dropped only when the refresh call itself comes
+        // back 401 -- that specifically means the refresh token is expired/revoked/orphaned, so
+        // there is no valid session left to retry with. A network error, a 429 (the refresh
+        // endpoint is throttled server-side), or a 5xx is a transient failure, not proof the
+        // session is invalid -- rethrow as-is so the caller sees a normal retryable error
+        // instead of being logged out while the backend/network hiccups.
+        if (error instanceof ApiError && error.status === 401) {
+            return clearSessionAndFail();
+        }
+
+        throw error;
+    }
+};
+
+// Several screens can fetch in parallel and hit a 401 at the same moment (e.g. feed, profile,
+// and notifications all firing on app foreground). Without this single-flight guard each would
+// start its own refresh call, racing the backend's refresh-token rotation and invalidating one
+// another. Every concurrent caller awaits the same in-flight promise instead, and retries with
+// whatever access token it resolves to.
+const getRefreshedAccessToken = (): Promise<string> => {
+    if (!refreshPromise) {
+        refreshPromise = performTokenRefresh().finally(() => {
+            refreshPromise = null;
+        });
+    }
+
+    return refreshPromise;
+};
+
+export async function apiRequest<T, TBody = unknown>(options: ApiRequestOptions<TBody>): Promise<T> {
+    try {
+        return await performFetch<T, TBody>(options);
+    } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 401 || isAuthExemptPath(options.path)) {
+            throw error;
+        }
+
+        // getRefreshedAccessToken rejects with a session-expired ApiError only when the refresh
+        // token is missing or the refresh call itself came back 401 (invalid/revoked/orphaned).
+        // For any other refresh failure (network error, 429, 5xx) it rejects with that original
+        // error instead, leaving the session intact -- both cases propagate here unchanged,
+        // through the same error path callers already handle.
+        const newAccessToken = await getRefreshedAccessToken();
+
+        // Retry exactly once, going straight through performFetch rather than back through
+        // apiRequest -- if this retry also comes back 401, it surfaces as a genuine auth
+        // failure instead of triggering another refresh and looping.
+        return performFetch<T, TBody>(options, newAccessToken);
+    }
 }

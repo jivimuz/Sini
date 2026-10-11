@@ -34,10 +34,12 @@ export const useAuth = create<AuthState>((set) => ({
     },
 
     logout: async () => {
-        const refreshToken = await tokenStorage.getRefresh();
-
         try {
-            await logoutRequest(refreshToken ? { refreshToken } : {});
+            // Let logoutRequest read the device's current refresh token itself, at actual send
+            // time -- reading it here and passing it in would bake a value captured before the
+            // call into the request body, which goes stale if client.ts's 401 interceptor
+            // refreshes (and rotates) the token in between.
+            await logoutRequest();
         } catch {
             // Best-effort: tetap hapus sesi lokal meski request logout ke server gagal
             // (misalnya token sudah kedaluwarsa atau tidak ada koneksi).

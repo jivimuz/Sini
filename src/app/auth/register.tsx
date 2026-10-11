@@ -9,9 +9,7 @@ import { AppleButton } from '@/components/Auth/AppleButton/AppleButton';
 import { useLang } from '@/stores/lang.store';
 import locales from './locales';
 import { LanguageSwitch } from '@/components/Lang/SwitchLangButton';
-import { useAuth } from '../../stores/auth.store';
 import { register as registerRequest } from './api/register';
-import { tokenStorage } from '../api/client';
 import { ApiError } from '../api/types';
 
 export default function RegisterScreen() {
@@ -26,7 +24,6 @@ export default function RegisterScreen() {
         setNavbar(false);
     }, []);
 
-    const { login: setLoggedIn } = useAuth();
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -64,15 +61,16 @@ export default function RegisterScreen() {
         setIsSubmitting(true);
 
         try {
-            const session = await registerRequest({
+            // Registration no longer returns a session -- the backend emails a 6-digit
+            // verification code instead, so hand off to verify-email to complete the flow.
+            const { email: registeredEmail } = await registerRequest({
                 name: name.trim(),
                 username: username.trim(),
                 email: email.trim(),
                 password,
                 password_confirmation: confirmPassword,
             });
-            await tokenStorage.setSession(session);
-            setLoggedIn();
+            router.push({ pathname: '/auth/verify-email', params: { email: registeredEmail } });
         } catch (error) {
             if (error instanceof ApiError && error.status === 422) {
                 const errors = (error.details as { errors?: Record<string, string[]> } | undefined)?.errors;
