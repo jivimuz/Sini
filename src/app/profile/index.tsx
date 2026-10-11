@@ -334,7 +334,7 @@ const ProfileScreen = () => {
                             {/* --- Bagian Lainnya --- */}
                             <Text className="text-sm font-bold text-gray-500 uppercase mb-2 px-2">{t.otherSection}</Text>
                             <View className="mb-6">
-                                <MenuItem icon="help-circle-outline" label={t.helpCenter} />
+                                <MenuItem icon="help-circle-outline" onPress={() => router.push('/help')} label={t.helpCenter} />
                                 <MenuItem icon="information-circle-outline" onPress={() => router.push('/about')} label={t.aboutApp} />
                             </View>
 

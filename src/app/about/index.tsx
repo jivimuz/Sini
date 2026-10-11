@@ -16,6 +16,7 @@ const AboutScreen = () => {
     const { setNavbar } = useShowNavbar();
     useEffect(() => {
         setNavbar(false);
+        return () => setNavbar(true);
     }, []);
 
     // Peningkatan CreditItem: Desain baris list modern yang menyatu dengan aksen inisial avatar
