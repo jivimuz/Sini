@@ -1,0 +1,27 @@
+export default {
+    helpdeskScreen: {
+        title: "Tiket Dukungan",
+        newTicketButton: "Buat Tiket Baru",
+        emptyTitle: "Belum ada tiket",
+        emptyMessage: "Tiket dukungan yang Anda buat akan muncul di sini.",
+        rateLimitTitle: "Terlalu banyak permintaan",
+        rateLimitMessage: "Tunggu sebentar lalu coba lagi.",
+        serverErrorTitle: "Gagal memuat",
+        networkErrorTitle: "Tidak ada koneksi",
+        networkErrorMessage: "Periksa koneksi internet Anda dan coba lagi.",
+        retryButton: "Coba Lagi",
+    },
+    helpdeskNewScreen: {
+        title: "Buat Tiket Baru",
+        titleLabel: "Judul",
+        titlePlaceholder: "Ringkas masalah Anda",
+        descriptionLabel: "Deskripsi",
+        descriptionPlaceholder: "Jelaskan masalah Anda secara detail",
+        submitButton: "Kirim Tiket",
+        requiredFieldsError: "Judul dan deskripsi wajib diisi.",
+        genericError: "Periksa kembali data tiket Anda.",
+        rateLimitError: "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.",
+        networkError: "Gagal mengirim. Periksa koneksi dan coba lagi.",
+        createSuccess: "Tiket berhasil dibuat",
+    },
+};

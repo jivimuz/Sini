@@ -2,24 +2,15 @@ export default {
     profileScreen: {
         // Judul Bagian
         accountSection: "Akun",
-        settingsSection: "Pengaturan",
         otherSection: "Lainnya",
 
         // Item Menu
         editProfile: "Edit Profil",
         settingsMenu: "Pengaturan",
         helpCenter: "Pusat Bantuan",
+        supportTickets: "Tiket Dukungan",
         aboutApp: "Tentang Aplikasi",
         logout: "Keluar",
-
-        // Bagian Bahasa
-        languageSection: {
-            title: "Bahasa",
-            description: "Pilih bahasa tampilan aplikasi.",
-            id: "Indonesia",
-            en: "Inggris"
-        }
-
     },
     editProfileScreen: {
         title: "Edit Profil",
@@ -42,6 +33,16 @@ export default {
     },
     settingScreen: {
         title: "Pengaturan",
+
+        // Bagian Bahasa
+        languageSection: {
+            title: "Bahasa",
+            description: "Pilih bahasa tampilan aplikasi.",
+            id: "Indonesia",
+            en: "Inggris",
+            saveErrorTitle: "Gagal menyimpan bahasa",
+            saveErrorMessage: "Periksa koneksi dan coba lagi.",
+        },
 
         notificationSection: "Notifikasi",
         notificationTitle: "Terima Notifikasi",

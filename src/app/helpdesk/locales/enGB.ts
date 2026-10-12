@@ -1,0 +1,27 @@
+export default {
+    helpdeskScreen: {
+        title: "Support Tickets",
+        newTicketButton: "New Ticket",
+        emptyTitle: "No tickets yet",
+        emptyMessage: "Support tickets you create will show up here.",
+        rateLimitTitle: "Too many requests",
+        rateLimitMessage: "Wait a moment and try again.",
+        serverErrorTitle: "Failed to load",
+        networkErrorTitle: "No connection",
+        networkErrorMessage: "Check your internet connection and try again.",
+        retryButton: "Try Again",
+    },
+    helpdeskNewScreen: {
+        title: "New Ticket",
+        titleLabel: "Title",
+        titlePlaceholder: "Briefly summarize your issue",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "Describe your issue in detail",
+        submitButton: "Submit Ticket",
+        requiredFieldsError: "Title and description are required.",
+        genericError: "Please check your ticket details.",
+        rateLimitError: "Too many attempts. Wait a moment and try again.",
+        networkError: "Failed to submit. Check your connection and try again.",
+        createSuccess: "Ticket created successfully",
+    },
+};

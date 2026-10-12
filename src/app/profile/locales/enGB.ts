@@ -2,24 +2,15 @@ export default {
     profileScreen: {
         // Section Titles
         accountSection: "Account",
-        settingsSection: "Settings",
         otherSection: "Other",
 
         // Menu Items
         editProfile: "Edit Profile",
         settingsMenu: "Settings",
         helpCenter: "Help Center",
+        supportTickets: "Support Tickets",
         aboutApp: "About App",
         logout: "Logout",
-
-        // Language Section
-        languageSection: {
-            title: "Language",
-            description: "Choose the application display language.",
-            id: "Indonesian",
-            en: "English"
-        }
-
     },
     editProfileScreen: {
         title: "Edit Profile",
@@ -42,6 +33,16 @@ export default {
     },
     settingScreen: {
         title: "Settings",
+
+        // Language Section
+        languageSection: {
+            title: "Language",
+            description: "Choose the application display language.",
+            id: "Indonesian",
+            en: "English",
+            saveErrorTitle: "Failed to save language",
+            saveErrorMessage: "Check your connection and try again.",
+        },
 
         notificationSection: "Notifications",
         notificationTitle: "Receive Notifications",

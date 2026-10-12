@@ -14,10 +14,11 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useLang } from '@/stores/lang.store';
+import { Lang, useLang } from '@/stores/lang.store';
 import locales from '../locales';
 import Toast from '@/utils/Toast';
 import { changePassword } from '../../auth/api/change-password';
+import { updateProfile } from '../api/update';
 import { ApiError } from '../../api/types';
 import { biometricAuth, biometricPreference, type BiometricCapability } from '@/utils/biometricAuth';
 import {
@@ -93,8 +94,26 @@ const SettingRow = ({ icon, title, subtitle, right, onPress }: SettingRowProps) 
     </TouchableOpacity>
 );
 
+type LanguageButtonProps = {
+    targetLang: Lang;
+    label: string;
+    currentLang: Lang;
+    onPress: (targetLang: Lang) => void;
+};
+
+const LanguageButton = ({ targetLang, label, currentLang, onPress }: LanguageButtonProps) => (
+    <TouchableOpacity
+        onPress={() => onPress(targetLang)}
+        className={`flex-1 p-3 rounded-lg ${currentLang === targetLang ? 'bg-primary' : 'bg-gray-200'}`}
+    >
+        <Text className={`text-center font-semibold ${currentLang === targetLang ? 'text-black' : 'text-gray-600'}`}>
+            {label}
+        </Text>
+    </TouchableOpacity>
+);
+
 export default function SettingScreen() {
-    const { lang } = useLang();
+    const { lang, setLang } = useLang();
     const t = locales[lang].settingScreen;
 
     // --- Notifikasi ---
@@ -134,6 +153,28 @@ export default function SettingScreen() {
             isMounted = false;
         };
     }, []);
+
+    const handleChangeLanguage = async (targetLang: Lang) => {
+        if (targetLang === lang) return;
+
+        const previousLang = lang;
+        setLang(targetLang);
+
+        try {
+            await updateProfile({ language: targetLang });
+        } catch (error) {
+            // The PATCH failed -- revert the optimistic local change immediately instead of
+            // leaving the UI claiming a change that never reached the server. `profile/index.tsx`'s
+            // `loadProfile` also syncs `lang` from the server on every focus; without this revert
+            // the user would briefly see the new language here, then have it silently snapped
+            // back when they navigate back to Profile (which is pushed underneath this screen).
+            setLang(previousLang);
+            Toast.error(
+                t.languageSection.saveErrorTitle,
+                error instanceof ApiError ? error.message : t.languageSection.saveErrorMessage
+            );
+        }
+    };
 
     const handleToggleNotifications = async (value: boolean) => {
         if (isTogglingNotifications) return;
@@ -257,6 +298,24 @@ export default function SettingScreen() {
             </View>
 
             <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+                {/* --- Bahasa --- */}
+                <Text className="text-sm font-bold text-gray-500 uppercase mb-3 px-1">{t.languageSection.title}</Text>
+                <View className="mb-8">
+                    <View className="bg-white p-4 rounded-xl flex-row items-center">
+                        <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
+                            <Ionicons name="language-outline" size={22} color="#F6C431" />
+                        </View>
+                        <View className="flex-1 pr-3">
+                            <Text className="text-base font-semibold text-gray-800">{t.languageSection.title}</Text>
+                            <Text className="text-xs text-gray-500 mt-1 mb-3">{t.languageSection.description}</Text>
+                            <View className="flex-row gap-2">
+                                <LanguageButton targetLang="idID" label={t.languageSection.id} currentLang={lang} onPress={handleChangeLanguage} />
+                                <LanguageButton targetLang="enGB" label={t.languageSection.en} currentLang={lang} onPress={handleChangeLanguage} />
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
                 {/* --- Notifikasi --- */}
                 <Text className="text-sm font-bold text-gray-500 uppercase mb-3 px-1">{t.notificationSection}</Text>
                 <View className="mb-8">

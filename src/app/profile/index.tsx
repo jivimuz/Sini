@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl, ActivityIndicator } from 'react-native'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Lang, useLang } from '@/stores/lang.store'
+import { useLang } from '@/stores/lang.store'
 import locales from './locales'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '@/constants/theme'
@@ -14,7 +14,6 @@ import { useAuth } from '@/stores/auth.store'
 import { router, useFocusEffect } from 'expo-router'
 import { getMe, ProfileResponse } from './api/me'
 import { updateAvatar } from './api/avatar'
-import { updateProfile } from './api/update'
 import { ApiError } from '../api/types'
 
 // --- Komponen untuk item menu ---
@@ -207,31 +206,6 @@ const ProfileScreen = () => {
         }
     };
 
-    const handleChangeLanguage = async (targetLang: Lang) => {
-        if (targetLang === lang) return;
-
-        setLang(targetLang);
-
-        try {
-            const updated = await updateProfile({ language: targetLang });
-            setProfile(updated);
-        } catch {
-            // Bahasa tetap berubah di perangkat ini meski gagal disimpan ke server.
-        }
-    };
-
-    // --- Komponen untuk tombol pilihan bahasa ---
-    const LanguageButton = ({ targetLang, label }: { targetLang: Lang, label: string }) => (
-        <TouchableOpacity
-            onPress={() => handleChangeLanguage(targetLang)}
-            className={`flex-1 p-3 rounded-lg ${lang === targetLang ? 'bg-primary' : 'bg-gray-200'}`}
-        >
-            <Text className={`text-center font-semibold ${lang === targetLang ? 'text-black' : 'text-gray-600'}`}>
-                {label}
-            </Text>
-        </TouchableOpacity>
-    );
-
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 bg-gray-50 items-center justify-center" edges={['top', 'left', 'right']}>
@@ -317,24 +291,11 @@ const ProfileScreen = () => {
                                 <MenuItem icon="settings-outline" label={t.settingsMenu} onPress={() => router.push('/profile/settings')} />
                             </View>
 
-                            {/* --- Bagian Pengaturan Aplikasi --- */}
-                            <Text className="text-sm font-bold text-gray-500 uppercase mb-2 px-2">{t.settingsSection}</Text>
-                            <View className="bg-white p-4 rounded-xl mb-6">
-                                <View className="flex-row items-center">
-                                    <Ionicons name="language-outline" size={22} color="#60646C" />
-                                    <Text className="ml-4 text-base font-semibold text-gray-800">{t.languageSection.title}</Text>
-                                </View>
-                                <Text className="text-sm text-gray-500 mt-1 mb-4 ml-10">{t.languageSection.description}</Text>
-                                <View className="flex-row space-x-3 ml-10 gap-2">
-                                    <LanguageButton targetLang="idID" label={t.languageSection.id} />
-                                    <LanguageButton targetLang="enGB" label={t.languageSection.en} />
-                                </View>
-                            </View>
-
                             {/* --- Bagian Lainnya --- */}
                             <Text className="text-sm font-bold text-gray-500 uppercase mb-2 px-2">{t.otherSection}</Text>
                             <View className="mb-6">
                                 <MenuItem icon="help-circle-outline" onPress={() => router.push('/help')} label={t.helpCenter} />
+                                <MenuItem icon="ticket-outline" onPress={() => router.push('/helpdesk')} label={t.supportTickets} />
                                 <MenuItem icon="information-circle-outline" onPress={() => router.push('/about')} label={t.aboutApp} />
                             </View>
 

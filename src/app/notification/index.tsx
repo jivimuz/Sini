@@ -15,6 +15,8 @@ const ICON_BY_TYPE: Record<string, { name: keyof typeof Ionicons.glyphMap; color
     system: { name: 'information-circle', color: '#3B82F6' },
     like: { name: 'heart', color: '#EF4444' },
     message: { name: 'chatbubble-ellipses', color: '#22C55E' },
+    follow: { name: 'person-add', color: '#8B5CF6' },
+    password_changed: { name: 'lock-closed', color: '#F59E0B' },
 };
 const DEFAULT_ICON = { name: 'notifications' as const, color: '#FFD84D' };
 
